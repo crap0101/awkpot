@@ -7,15 +7,16 @@
 @namespace "awkpot"
 # Cfg. "arrlib" @ https://github.com/crap0101/awk_arrlib
 
-#XXX+TODO: write tests
-
 function dprint_real(arg) {
     # Prints arg on stderr, for real!
+    # Return true.
     print arg >> "/dev/stderr"
+    return 1
 }
 
 function dprint_fake(arg) {
-    return 1 # prrrrrrrrrrrrrrrint... nope
+    # Does nothing, and returns false.
+    return 0 # prrrrrrrrrrrrrrrint... nope
 }
 
 function set_dprint(arg) {
