@@ -6,6 +6,13 @@
 # https://github.com/crap0101/laundry_basket/blob/master/testing.awk
 
 BEGIN {
+   if (awk::AWKPOT_DEBUG) {
+	dprint = "awkpot::dprint_real"
+	# to set dprint in awkpot functions also (defaults to dprint_fake)
+	awkpot::set_dprint(dprint)
+    } else {
+	dprint = "awkpot::dprint_fake"
+    }
 
     testing::start_test_report()
 
@@ -63,7 +70,7 @@ BEGIN {
     cmd = sprintf("awk -i awkpot.awk 'BEGIN {awkpot::set_dprint(\"awkpot::dprint_real\");awkpot::set_sort_order(\"fake\")}' 2>%s", t)
     ret = awkpot::run_command(cmd, 0, args)
     awkpot::read_file_arr(t, arread)
-    print "* arread:"; arrlib::array_print(arread)
+    @dprint("* arread:") && arrlib::array_print(arread)
     testing::assert_not_equal(0, arrlib::array_length(arread), 1, "> set_dprint (real) (length)")
     testing::assert_equal(2, arrlib::array_length(arread), 1, "> set_dprint (real) (length eq)")
     testing::assert_not_equal("", arrlib::sprintf_val(arread), 1, "> set_dprint (real) (sprintf !eq)")
@@ -94,7 +101,7 @@ BEGIN {
     arr3[11] = 1 ; arr3[10] = 0
     testing::assert_true(awkpot::equals(arr1, arr2), 1, "> equals arr1 arr2")
     testing::assert_true(awkpot::equals(arr3, arr2), 1, "> equals arr3 arr2")
-    print "* delete arr1"
+    @dprint("* delete arr1")
     delete arr1
     testing::assert_true(awkpot::equals(arr1, arr3), 1, "> equals arr1 arr3")
     testing::assert_false(awkpot::equals("foo", arr3), 1, "> ! equals \"foo\" arr3")
@@ -110,5 +117,6 @@ BEGIN {
     testing::end_test_report()
     testing::report()
 
-    # awk -f thisfile
+    # run:
+    # ~$ awk -v AWKPOT_DEBUG=1 -f awkpot_test.awk
 }
