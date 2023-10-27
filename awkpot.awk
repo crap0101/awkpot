@@ -26,6 +26,66 @@ function set_dprint(arg) {
     dprint = arg
 }
 
+function check_defined(funcname, check_id) {
+    # Checks if $funcname is available, searching
+    # in the FUNCTAB array.
+    # If $check_id is true, check also the
+    # PROCINFO["identifiers"] array.
+    if (! (funcname in FUNCTAB)) {
+	if (! check_id) {
+	    return 0
+	} else {
+	    if (funcname in PROCINFO["identifiers"]) {
+		if (PROCINFO["identifiers"][funcname] == "user") {
+		    return 1
+		} else if (PROCINFO["identifiers"][funcname] == "untyped") {
+		    @dprint(sprintf("check_defined: <%s> is <%s>",
+				    funcname, PROCINFO["identifiers"][funcname]))
+		    return 1
+		} else {
+		    printf("check_defined: Unknown value for <%s>: %s\n",
+			   funcname, PROCINFO["identifiers"][funcname]) > "/dev/stderr"
+		    return 0
+		}
+	    } else {
+		return 0
+	    }
+	}
+    } else {
+	return 1
+    }
+}
+
+function _mkbool(expression) {
+    # Private function for "creating" bool values. 
+    # Returns 1 if $expression evaluate to a true value, else 0.
+    # For (g)awk version without the mkbool function.
+    if (expression)
+	return 1
+    return 0
+}
+
+function cmkbool(expression) {
+    # Returns true if $expression evaluate to a true value, else false.
+    # For (g)awk version without the mkbool function.
+    # Uses either awkpot::_mkbool or,
+    # if available, the builtin mkbool function.
+    return @_cmkbool(expression)
+}
+
+function set_mkbool() {
+    # Checks and set a sort-of-a-kind "mkbool" function.
+    # For (g)awk version without the builtin mkbool function,
+    # sets the function used by cmkbool (awkpot::_mkbool function),
+    # otherwise uses the builtin mkbool function.
+    # Returns a string of the setted name.
+    if (! check_defined("mkbool"))
+	_cmkbool = "awkpot::_mkbool"
+    else
+	_cmkbool = "mkbool"
+    return _cmkbool
+}
+
 function equals(val1, val2, type) {
     # Checks if $val1 equals $val2.
     # Arrays comparison evaluate always to true. (use arrlib::equals
@@ -55,10 +115,10 @@ function equals_typed(val1, val2) {
 function set_sort_order(sort_type,    prev_sorted) {
     # Sets PROCINFO["sorted_in"] to $sort_type
     # Returns the previously sorting order string set.
-    @dprint("actual sorting:" PROCINFO["sorted_in"])
+    @dprint(sprintf("set_sort_order: actual sorting: <%s>", PROCINFO["sorted_in"]))
     prev_sorted = PROCINFO["sorted_in"]
     PROCINFO["sorted_in"] = sort_type
-    @dprint("new sorting:" PROCINFO["sorted_in"])
+    @dprint(sprintf("set_sort_order: new sorting: <%s>", PROCINFO["sorted_in"]))
     return prev_sorted
 }
 
@@ -72,7 +132,7 @@ function get_tempfile(must_exit,    cmd, ret, tempfile) {
     ret = (cmd | getline tempfile)
     close(cmd)
     if (ret < 0) {
-	printf ("Error creating tempfile. ERRNO: %d\n", ERRNO) > "/dev/stderr"
+	printf ("get_tempfile: Error creating tempfile. ERRNO: %d\n", ERRNO) > "/dev/stderr"
 	if (must_exit)
 	    exit(ERRNO)
 	tempfile = ""
@@ -105,7 +165,7 @@ function run_command(command, nargs, args_array, must_exit, run_values,    i, cm
     run_values["retcode"] = ret
     if (ret < 0) {
 	if (must_exit) {
-	    printf ("Error creating tempfile. ERRNO: %d\n", ERRNO) > "/dev/stderr"
+	    printf ("run_coomand: Error creating tempfile. ERRNO: %d\n", ERRNO) > "/dev/stderr"
 	    exit(ERRNO)
 	} else {
 	    run_values["errno"] = ERRNO
@@ -116,6 +176,74 @@ function run_command(command, nargs, args_array, must_exit, run_values,    i, cm
     return 1
 }
 
+function force_type(val, type, dest,    _reg) {
+    # Tries to force the type of $val to $type.
+    # Save conversion and other info in the $dest array.
+    # Returns 1 if the conversion succeeded or 0 if errors.
+    #
+    # Supported $val types:
+    # * string, number, bool, strnum, regexp, unassigned, untyped
+    # Supported $type values:
+    # * "string", "number", "regexp", "bool"
+    # NOTE: $type bool require a (g)awk version with the builtin
+    # mkbool function. In Sostitution the awkpot::set_mkbool
+    # function can be used to set the custom _mkbool in his place,
+    # however the returned value will be of type "number").
+    # Unsupported conversion:
+    # * regexp to (number|bool|strnum)
+    # * any type but regexp to regexp
+    # * unassigned and untyped conversion $type are clearly not an option in any case :).
+    delete dest
+    dest["val"] = val
+    dest["val_type"] = awk::typeof(val)
+    dest["newval"]
+    dest["newval_type"]
+    switch (type) {
+	case "string":
+	    if (dest["val_type"] != "string")
+		dest["newval"] = val ""
+	    else
+		dest["newval"] = val
+	    break
+        case "number":
+	    if (dest["val_type"] == "regexp") {
+		printf ("force_type: Cannot convert from <%s> to <%s> \n",
+			dest["val_type"], type) > "/dev/stderr"
+		return 0
+	    } else if (dest["val_type"] == "number") {
+		dest["newval"] = val
+	    } else {
+		dest["newval"] = awk::strtonum(val)
+	    }
+	    break
+	case "bool":
+	    if (dest["val_type"] == "regexp") {
+		printf ("force_type: Cannot convert from <%s> to <%s> \n",
+			dest["val_type"], type) > "/dev/stderr"
+		return 0
+	    } else if (dest["val_type"] == "bool") {
+		dest["newval"] = val		
+	    } else {
+		dest["newval"] = cmkbool(val)
+	    }
+	    break
+	case "regexp": #XXX+TODO: find a workaround
+	    # NOTE: https://www.gnu.org/software/gawk/manual/gawk.html#Strong-Regexp-Constants
+	    # regexp-typed variable creation on runtime don't works consistently on gawk 5.1
+	    if (dest["val_type"] != "regexp") {
+		printf ("force_type: Cannot convert from <%s> to <%s> \n",
+			dest["val_type"], type) > "/dev/stderr"
+		return 0
+	    } else
+		dest["newval"] = val
+	    break
+        default:
+	    printf ("force_type: Unkown conversion type <%s>\n", type) > "/dev/stderr"
+	    return 0
+    }
+    dest["newval_type"] = awk::typeof(dest["newval"])
+    return 1
+}
 
 function read_file_arr(filename, dest, start_index,   line, ret, idx) {
     # Reads $filename into the $dest array, one line per index
@@ -127,12 +255,13 @@ function read_file_arr(filename, dest, start_index,   line, ret, idx) {
     while ((ret = (getline line < filename)) > 0)
 	dest[idx++] = line
     if (ret < 0)
-	printf ("Error reading <%s>. ERRNO: %d\n", filename, ERRNO) > "/dev/stderr"
+	printf ("read_file_arr: Error reading <%s>. ERRNO: %d\n", filename, ERRNO) > "/dev/stderr"
     close(filename)
 }
 
 
 BEGIN {
     set_dprint("awkpot::dprint_fake")
+    set_mkbool()
 }
 
