@@ -122,24 +122,6 @@ function set_sort_order(sort_type,    prev_sorted) {
     return prev_sorted
 }
 
-
-function get_tempfile(must_exit,    cmd, ret, tempfile) {
-    # Returns a string to the path of a temporary file
-    # or an empty string if the command fails. In this case,
-    # if the optional parameter $must_exit is true, exits with ERRNO value.
-    # Uses the mktemp command.
-    cmd = "mktemp"
-    ret = (cmd | getline tempfile)
-    close(cmd)
-    if (ret < 0) {
-	printf ("get_tempfile: Error creating tempfile. ERRNO: %d\n", ERRNO) > "/dev/stderr"
-	if (must_exit)
-	    exit(ERRNO)
-	tempfile = ""
-    }
-    return tempfile
-}
-
 function run_command(command, nargs, args_array, must_exit, run_values,    i, cmd, ret, line, out) {
     # Runs $command with arguments retrieved from $args_array.
     # The latter must be a zero-based indexed array filled
@@ -227,7 +209,7 @@ function force_type(val, type, dest,    _reg) {
 		dest["newval"] = cmkbool(val)
 	    }
 	    break
-	case "regexp": #XXX+TODO: find a workaround
+	case "regexp": #XXX+TODO: find a workaround (c extension?)
 	    # NOTE: https://www.gnu.org/software/gawk/manual/gawk.html#Strong-Regexp-Constants
 	    # regexp-typed variable creation on runtime don't works consistently on gawk 5.1
 	    if (dest["val_type"] != "regexp") {

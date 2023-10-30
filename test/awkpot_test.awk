@@ -5,6 +5,9 @@
 @include "testing"
 # https://github.com/crap0101/laundry_basket/blob/master/testing.awk
 
+@load "sysutils"
+# https://github.com/crap0101/awk_sysutils
+
 BEGIN {
    if (awk::AWKPOT_DEBUG) {
 	dprint = "awkpot::dprint_real"
@@ -16,10 +19,7 @@ BEGIN {
 
     testing::start_test_report()
 
-    # TEST get_tempfile | run_command | read_file_arr
-    @dprint("* test get_tempfile / run_command / read_file_arr:")
-    t = awkpot::get_tempfile()
-    testing::assert_true(t, 1, "> get_tempfile()")
+    t = sys::mktemp("/tmp")
 
     cmd = "seq"
     args[0] = 4
@@ -51,7 +51,6 @@ BEGIN {
     
     # TEST dprint_real, dprint_fake, 
     @dprint("* test dprint_real / dprint_fake:")
-    t = awkpot::get_tempfile()
     f = "awkpot::dprint_real"
     cmd = sprintf("awk -i awkpot.awk 'BEGIN {%s(\"foo\")}' 2>%s", f, t)
     ret = awkpot::run_command(cmd, 0, args, 0, run)
@@ -78,6 +77,9 @@ BEGIN {
     testing::assert_equal(2, arrlib::array_length(arread), 1, "> set_dprint (real) (length eq)")
     testing::assert_not_equal("", arrlib::sprintf_val(arread), 1, "> set_dprint (real) (sprintf !eq)")
     delete arread
+    sys::rm(t)
+
+    sys::rm(t)
     
     # TEST set_sort_order
     @dprint("* test sort_order:")
@@ -281,7 +283,7 @@ BEGIN {
 	@dprint(sprintf("* (failed) forcing <%s> gets <%s> (type: <%s>)",
 			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
     }
-    
+
 # report
     testing::end_test_report()
     testing::report()
