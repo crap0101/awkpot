@@ -8,6 +8,11 @@
 @load "sysutils"
 # https://github.com/crap0101/awk_sysutils
 
+# NOTES:
+# * Some tests uses system's commands: which, seq, awk          # :D
+# and some non-standard ones:  _____x__foo, xx_foo__bar__xx   # ^|^
+# * Others requires the sysutils extension (see some lines above).
+
 BEGIN {
    if (awk::AWKPOT_DEBUG) {
 	dprint = "awkpot::dprint_real"
@@ -284,7 +289,27 @@ BEGIN {
 			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
     }
 
-# report
+    # TEST exec_command
+    # NOTE: assumings <which> is an actual system's command
+    testing::assert_true(awkpot::exec_command("which which"), 1, "> exec_command [which]")
+    testing::assert_true(awkpot::exec_command("which which", 0), 1, "> exec_command [which, must_exit=0]")
+    testing::assert_true(awkpot::exec_command("which which", 1), 1, "> exec_command [which, must_exit=1]")
+    testing::assert_false(awkpot::exec_command(), 1, "> ! exec_command [no args]")
+    testing::assert_false(awkpot::exec_command("xx_foo__bar__xx"), 1, "> ! exec_command [invalid command]")
+    __cmd = "awk -i awkpot.awk \"BEGIN { awkpot::exec_command(\\\"_____x__foo\\\", 1)}\""
+    __r = system(__cmd)
+    testing::assert_not_equal(__r, 0, 1, "> ! check exit on error")
+    
+    # TEST check_load_module
+    testing::assert_true(awkpot::check_load_module("awkpot.awk"), 1, "> check_load_module [awkpot]")
+    testing::assert_true(awkpot::check_load_module("awkpot.awk", 0), 1, "> check_load_module [awkpot, is_ext=0]")
+    testing::assert_false(awkpot::check_load_module("awkpot.awk", 1), 1, "> ! check_load_module [awkpot, is_ext=1]")
+    testing::assert_false(awkpot::check_load_module("sysutils"), 1, "> ! check_load_module [sysutils]")
+    testing::assert_true(awkpot::check_load_module("sysutils", 1) 1, "> check_load_module [sysutils, is_ext=1]")
+    testing::assert_false(awkpot::check_load_module("sysutils", 0), 1, "> check_load_module [sysutils, is_ext=0]")
+
+
+    # report
     testing::end_test_report()
     testing::report()
 

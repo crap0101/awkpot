@@ -122,7 +122,28 @@ function set_sort_order(sort_type,    prev_sorted) {
     return prev_sorted
 }
 
+function exec_command(command, must_exit) {
+    # Executes $command using the built-in system() function.
+    # Returns true if command succedes, 0 if fail.
+    # If $must_exit is true, exit with the $command return code.
+    if (! command) {
+	printf("exec_command: <%s> seems not a valid command name\n", command) > "/dev/stderr"
+	return 0
+    }
+    if (0 != (ret = system(command))) {
+	printf ("exec_command: Error! <%s> exit status is: %d\n", command, ret) > "/dev/stderr"
+	if (must_exit)
+	    exit(ret)
+	else
+	    return 0
+    }
+    return 1
+}
+
 function run_command(command, nargs, args_array, must_exit, run_values,    i, cmd, ret, line, out) {
+    # Alternative method to run a command using <getline>,
+    # purposely avoiding the built-in system() function (see exec_command).
+    #
     # Runs $command with arguments retrieved from $args_array.
     # The latter must be a zero-based indexed array filled
     # with $nargs number of arguments, used to build the
@@ -147,7 +168,7 @@ function run_command(command, nargs, args_array, must_exit, run_values,    i, cm
     run_values["retcode"] = ret
     if (ret < 0) {
 	if (must_exit) {
-	    printf ("run_coomand: Error creating tempfile. ERRNO: %d\n", ERRNO) > "/dev/stderr"
+	    printf ("run_command: Error creating tempfile. ERRNO: %d\n", ERRNO) > "/dev/stderr"
 	    exit(ERRNO)
 	} else {
 	    run_values["errno"] = ERRNO
@@ -156,6 +177,25 @@ function run_command(command, nargs, args_array, must_exit, run_values,    i, cm
     }
     run_values["errno"] = ""
     return 1
+}
+
+function check_load_module(name, is_ext,   cmd, exe) {
+    # Checks if the awk module or the extension $name
+    # is available in the system. If $name is an extension
+    # to load, the (optional) $is_ext parameter must be set to true.
+    # Return true if it's, else 0.
+
+    # For some reasons ARGV[0] is unreliable
+    # https://www.gnu.org/software/gawk/manual/gawk.html#index-dark-corner-31
+    # so we fall back to use a plain "awk" name.
+    #
+    #exe = ARGV[0] ? (match(ARGV[0], "awk") ? ARGV[0] : "awk") : "awk"
+    exe = "awk"
+    if (is_ext)
+        cmd = sprintf("%s -l %s 'BEGIN {exit(0)}'", exe, name)
+    else
+        cmd = sprintf("%s -i %s 'BEGIN {exit(0)}'", exe, name)
+    return exec_command(cmd)
 }
 
 function force_type(val, type, dest,    _reg) {
