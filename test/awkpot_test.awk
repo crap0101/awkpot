@@ -2,8 +2,8 @@
 @include "awkpot"
 @include "arrlib"
 # https://github.com/crap0101/awk_arrlib
-@include "testing"
-# https://github.com/crap0101/laundry_basket/blob/master/testing.awk
+@include "awk_testing"
+# https://github.com/crap0101/laundry_basket/blob/master/awk_testing.awk
 
 @load "sysutils"
 # https://github.com/crap0101/awk_sysutils
