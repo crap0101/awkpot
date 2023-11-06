@@ -14,10 +14,12 @@ function dprint_real(arg) {
     return 1
 }
 
+
 function dprint_fake(arg) {
     # Does nothing, and returns false.
     return 0 # prrrrrrrrrrrrrrrint... nope
 }
+
 
 function set_dprint(arg) {
     # Sets @dprint function to $arg.
@@ -25,6 +27,7 @@ function set_dprint(arg) {
     # and <dprint_real> for printing to sderr.
     dprint = arg
 }
+
 
 function check_defined(funcname, check_id) {
     # Checks if $funcname is available, searching
@@ -56,6 +59,7 @@ function check_defined(funcname, check_id) {
     }
 }
 
+
 function _mkbool(expression) {
     # Private function for "creating" bool values. 
     # Returns 1 if $expression evaluate to a true value, else 0.
@@ -73,6 +77,7 @@ function cmkbool(expression) {
     return @_cmkbool(expression)
 }
 
+
 function set_mkbool() {
     # Checks and set a sort-of-a-kind "mkbool" function.
     # For (g)awk version without the builtin mkbool function,
@@ -85,6 +90,7 @@ function set_mkbool() {
 	_cmkbool = "mkbool"
     return _cmkbool
 }
+
 
 function equals(val1, val2, type) {
     # Checks if $val1 equals $val2.
@@ -105,12 +111,14 @@ function equals(val1, val2, type) {
     }
 }
 
+
 function equals_typed(val1, val2) {
     # Checks if $val1 equals $val2 and are both of the same time.
     # Not meant to be used directly (use the <equals> funcs with
     # the $type parameter, instead).
     return val1 == val2 && awk::typeof(val1) == awk::typeof(val2)
 }
+
 
 function set_sort_order(sort_type,    prev_sorted) {
     # Sets PROCINFO["sorted_in"] to $sort_type
@@ -121,6 +129,7 @@ function set_sort_order(sort_type,    prev_sorted) {
     @dprint(sprintf("set_sort_order: new sorting: <%s>", PROCINFO["sorted_in"]))
     return prev_sorted
 }
+
 
 function exec_command(command, must_exit) {
     # Executes $command using the built-in system() function.
@@ -139,6 +148,7 @@ function exec_command(command, must_exit) {
     }
     return 1
 }
+
 
 function run_command(command, nargs, args_array, must_exit, run_values,    i, cmd, ret, line, out) {
     # Alternative method to run a command using <getline>,
@@ -179,6 +189,29 @@ function run_command(command, nargs, args_array, must_exit, run_values,    i, cm
     return 1
 }
 
+
+function random(seed, upto, init) {
+    # Convenience function to generate pseudo-random numbers
+    # using some builtin functions.
+    # NOTE: repeated random() calls are not suitable for create
+    # bunchs of random numbers in a row.
+    # To get random numbers calls this function a first time as
+    #
+    # random(0, 0, 1)
+    #
+    # to set a casual seed, then call random() whitout arguments
+    # to get random values. Giving the same true value to $seed
+    # assures predictable sequence from run to run.
+    if (! upto)
+	upto = 1000
+    if (! seed)
+	seed = awk::systime() % 1000
+    if (init)
+        srand(seed)
+    return int(upto * rand())
+}
+
+
 function check_load_module(name, is_ext,   cmd, exe) {
     # Checks if the awk module or the extension $name
     # is available in the system. If $name is an extension
@@ -197,6 +230,7 @@ function check_load_module(name, is_ext,   cmd, exe) {
         cmd = sprintf("%s -i %s 'BEGIN {exit(0)}'", exe, name)
     return exec_command(cmd)
 }
+
 
 function force_type(val, type, dest,    _reg) {
     # Tries to force the type of $val to $type.
@@ -266,6 +300,7 @@ function force_type(val, type, dest,    _reg) {
     dest["newval_type"] = awk::typeof(dest["newval"])
     return 1
 }
+
 
 function read_file_arr(filename, dest, start_index,   line, ret, idx) {
     # Reads $filename into the $dest array, one line per index

@@ -308,7 +308,26 @@ BEGIN {
     testing::assert_true(awkpot::check_load_module("sysutils", 1) 1, "> check_load_module [sysutils, is_ext=1]")
     testing::assert_false(awkpot::check_load_module("sysutils", 0), 1, "> check_load_module [sysutils, is_ext=0]")
 
+    # TEST random
+    testing::assert_nothing(1+awkpot::random(), 1, "> random() [assert_nothing]")
+    testing::assert_nothing(1+awkpot::random(0,0,0), 1, "> random() [assert_nothing]")
+    testing::assert_nothing(1+awkpot::random(1,11,1), 1, "> random() [assert_nothing]")
 
+    awkpot::random(4, 0, 1)
+    for (i=0;i<5;i++)
+	__r1[i] = awkpot::random()
+
+    awkpot::random(4, 0, 1)
+    for (i=0;i<5;i++)
+	__r2[i] = awkpot::random()
+    for (i=0;i<5;i++)
+	testing::assert_equal(__r1[i], __r2[i], 1, "> random() same seed")
+
+    # test upto
+    awkpot::random(0, 0, 1)
+    for (i=0;i<5;i++)
+	testing::assert_true(length(awkpot::random(0, 1000)) < 4, 1, "> random() upto")
+    
     # report
     testing::end_test_report()
     testing::report()
