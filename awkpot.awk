@@ -199,7 +199,7 @@ function random(seed, upto, init) {
     #
     # random(0, 0, 1)
     #
-    # to set a casual seed, then call random() whitout arguments
+    # to set a casual seed, then call random() without arguments
     # to get random values. Giving the same true value to $seed
     # assures predictable sequence from run to run.
     if (! upto)
