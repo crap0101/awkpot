@@ -193,6 +193,10 @@ function run_command(command, nargs, args_array, must_exit, run_values,    i, cm
 function random(seed, upto, init) {
     # Convenience function to generate pseudo-random numbers
     # using some builtin functions.
+    # $seed is a positive integer used (if $init is true) to initialize
+    # the random number generator (otherwise systime() is used).
+    # $upto (default to 1000) is the upper limit of the
+    # generated number (from 0 to $upto - 1).
     # To get random numbers calls this function a first time as
     #
     # random(0, 0, 1)
