@@ -193,14 +193,12 @@ function run_command(command, nargs, args_array, must_exit, run_values,    i, cm
 function random(seed, upto, init) {
     # Convenience function to generate pseudo-random numbers
     # using some builtin functions.
-    # NOTE: repeated random() calls are not suitable for create
-    # bunchs of random numbers in a row.
     # To get random numbers calls this function a first time as
     #
     # random(0, 0, 1)
     #
     # to set a casual seed, then call random() without arguments
-    # to get random values. Giving the same true value to $seed
+    # to get random values. Giving the same value to $seed
     # assures predictable sequence from run to run.
     if (! upto)
 	upto = 1000
