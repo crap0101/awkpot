@@ -2,7 +2,7 @@
 @include "awkpot"
 @include "arrlib"
 # https://github.com/crap0101/awk_arrlib
-@include "awk_testing"
+@include "testing"
 # https://github.com/crap0101/awk_testing
 
 @load "sysutils"
@@ -77,7 +77,7 @@ BEGIN {
     cmd = sprintf("awk -i awkpot.awk 'BEGIN {awkpot::set_dprint(\"awkpot::dprint_real\");awkpot::set_sort_order(\"fake\")}' 2>%s", t)
     ret = awkpot::run_command(cmd, 0, args)
     awkpot::read_file_arr(t, arread)
-    @dprint("* arread:") && arrlib::array_print(arread)
+    @dprint("* arread:") && arrlib::printa(arread)
     testing::assert_not_equal(0, arrlib::array_length(arread), 1, "> set_dprint (real) (length)")
     testing::assert_equal(2, arrlib::array_length(arread), 1, "> set_dprint (real) (length eq)")
     testing::assert_not_equal("", arrlib::sprintf_val(arread), 1, "> set_dprint (real) (sprintf !eq)")
