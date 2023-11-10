@@ -5,6 +5,8 @@
 
 
 @namespace "awkpot"
+
+@include "arrlib"
 # Cfg. "arrlib" @ https://github.com/crap0101/awk_arrlib
 
 function dprint_real(arg) {
@@ -190,14 +192,16 @@ function run_command(command, nargs, args_array, must_exit, run_values,    i, cm
 }
 
 
-function random(seed, upto, init) {
+function random(seed, upto, init, slow,    __rarr, __u, __i) {
     # Convenience function to generate pseudo-random numbers
     # using some builtin functions.
     # $seed is a positive integer used (if $init is true) to initialize
     # the random number generator (otherwise systime() is used).
-    # $upto (default to 1000) is the upper limit of the
+    # $upto (default to 1e6) is the upper limit of the
     # generated number (from 0 to $upto - 1).
-    # To get random numbers calls this function a first time as
+    # If $slow is a true value, uses a slower method
+    # which adds an indirection :-D ...don't bother.
+    # To get random numbers call this function a first time as
     #
     # random(0, 0, 1)
     #
@@ -205,12 +209,19 @@ function random(seed, upto, init) {
     # to get random values. Giving the same value to $seed
     # assures predictable sequence from run to run.
     if (! upto)
-	upto = 1000
+	upto = 1e6
     if (! seed)
 	seed = awk::systime() % 1000
     if (init)
         srand(seed)
-    return int(upto * rand())
+    if (slow) { # a slower alternative
+	delete __rarr
+	__u = 1000 * rand()
+	for (__i=0; __i<__u; __i++)
+	    __rarr[__i] = int(upto * rand())
+	return __rarr[int(upto * rand()) % arrlib::array_length(__rarr)]
+    } else
+	return int(upto * rand())
 }
 
 

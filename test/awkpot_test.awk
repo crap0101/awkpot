@@ -327,7 +327,26 @@ BEGIN {
     awkpot::random(0, 0, 1)
     for (i=0;i<5;i++)
 	testing::assert_true(length(awkpot::random(0, 1000)) < 4, 1, "> random() upto")
-    
+
+    # test randomness
+    awkpot::random(0, 0, 1)
+    for (_i=1; _i<=5; _i++) {
+	delete __rarr
+	tot = (10 ^ _i) % 30000
+	for (i=0; i<tot; i++)
+	    __rarr[awkpot::random()]
+	@dprint(sprintf("> randomness on %5d extraction: %3d%% [default method]",  tot, (100 * arrlib::array_length(__rarr)) / tot))
+    }
+    # slower
+    awkpot::random(0, 0, 1)
+    for (_i=1; _i<=5; _i++) {
+	delete __rarr
+	tot = (10 ^ _i) % 30000
+	for (i=0; i<tot; i++)
+	    __rarr[awkpot::random(0,0,0,1)]
+	@dprint(sprintf("> randomness on %5d extraction: %3d%% [slower method]",  tot, (100 * arrlib::array_length(__rarr)) / tot))
+    }
+
     # report
     testing::end_test_report()
     testing::report()
