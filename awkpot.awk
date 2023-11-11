@@ -69,33 +69,6 @@ function get_fmt(str, conv, maxspace, position,    len, fstr, lpad, rpad) {
     }
 }
 
-function __get_fmt(str, conv, maxspace, position,    len, pad) {
-    # Given a string $str and a conversion specifier $conv ("d", "s", ".2f", etc),
-    # builds a format string suitable to be used with (s)printf
-    # for print $str in a space of $maxspace chars justified
-    # as per $position, which must be one of "<c>":
-    # "<" means justify to the left,
-    # "c" means centered,
-    # ">" means justify to the right.
-    len = length(str)
-    if (! maxspace || maxspace < (len-2))
-	return "%s"
-    if (! position)
-	position = "<"
-    switch (position) {
-	case "<":
-	    print "XXXXXXXXXXXXXXXXXXXXXXXXXX", "<"
-	    return sprintf("%%-%d%s", maxspace, conv)
-	case ">":
-	    print "XXXXXXXXXXXXXXXXXXXXXXXXXX", ">"
-	    return sprintf("%%%d%s", maxspace, conv)
-	case "c":
-	    print "XXXXXXXXXXXXXXXXXXXXXXXXXX", "c"
-	    pad = sprintf("%*s", (maxspace/2) - (len/2), " ")
-	    return sprintf("%s%%%s%s", pad, conv, pad)
-    }
-}
-
 
 ##################
 # VARS AND TYPES #
