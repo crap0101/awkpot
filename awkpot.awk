@@ -9,6 +9,11 @@
 @include "arrlib"
 # Cfg. "arrlib" @ https://github.com/crap0101/awk_arrlib
 
+
+############
+# PRINTING #
+############
+
 function dprint_real(arg) {
     # Prints arg on stderr, for real!
     # Return true.
@@ -28,6 +33,48 @@ function set_dprint(arg) {
     # awkpot provides <dprint_fake> (print nothing)
     # and <dprint_real> for printing to sderr.
     dprint = arg
+}
+
+
+function get_fmt(str, conv, maxspace, position,    len, pad) {
+    # Given a string $str and a conversion specifier $conv ("d", "s", ".2f", etc),
+    # builds a format string suitable to be used with (s)printf
+    # for print $str in a space of $maxspace chars justified
+    # as per $position, which must be one of "<c>":
+    # "<" means justify to the left,
+    # "c" means centered,
+    # ">" means justify to the right.
+    len = length(str)
+    if (! maxspace || maxspace < (len-2))
+	return "%s"
+    if (!position)
+	position = "<"
+    switch (position) {
+	case "<":
+	    return sprintf("%%-%d%s", maxspace, conv)
+        case ">":
+	    return sprintf("%%%d%s", maxspace, conv)
+	case "c":
+	    pad = sprintf("%*s", (maxspace/2) - (len/2), " ")
+	    return sprintf("%s%%%s%s", pad, conv, pad)
+    }
+}
+
+
+##################
+# VARS AND TYPES #
+##################
+
+function id(x) {
+    # Identity function.
+    return x
+}
+
+function len(x) {
+    # Returns the length of $x using the builtin length() function.
+    # XXX: may be a bug in passing the builtin length for indirect function call,
+    # so we fall back with this.
+    return length(x)
 }
 
 
@@ -62,38 +109,6 @@ function check_defined(funcname, check_id) {
 }
 
 
-function _mkbool(expression) {
-    # Private function for "creating" bool values. 
-    # Returns 1 if $expression evaluate to a true value, else 0.
-    # For (g)awk version without the mkbool function.
-    if (expression)
-	return 1
-    return 0
-}
-
-function cmkbool(expression) {
-    # Returns true if $expression evaluate to a true value, else false.
-    # For (g)awk version without the mkbool function.
-    # Uses either awkpot::_mkbool or,
-    # if available, the builtin mkbool function.
-    return @_cmkbool(expression)
-}
-
-
-function set_mkbool() {
-    # Checks and set a sort-of-a-kind "mkbool" function.
-    # For (g)awk version without the builtin mkbool function,
-    # sets the function used by cmkbool (awkpot::_mkbool function),
-    # otherwise uses the builtin mkbool function.
-    # Returns a string of the setted name.
-    if (! check_defined("mkbool"))
-	_cmkbool = "awkpot::_mkbool"
-    else
-	_cmkbool = "mkbool"
-    return _cmkbool
-}
-
-
 function equals(val1, val2, type) {
     # Checks if $val1 equals $val2.
     # Arrays comparison evaluate always to true. (use arrlib::equals
@@ -119,129 +134,6 @@ function equals_typed(val1, val2) {
     # Not meant to be used directly (use the <equals> funcs with
     # the $type parameter, instead).
     return val1 == val2 && awk::typeof(val1) == awk::typeof(val2)
-}
-
-
-function set_sort_order(sort_type,    prev_sorted) {
-    # Sets PROCINFO["sorted_in"] to $sort_type
-    # Returns the previously sorting order string set.
-    @dprint(sprintf("set_sort_order: actual sorting: <%s>", PROCINFO["sorted_in"]))
-    prev_sorted = PROCINFO["sorted_in"]
-    PROCINFO["sorted_in"] = sort_type
-    @dprint(sprintf("set_sort_order: new sorting: <%s>", PROCINFO["sorted_in"]))
-    return prev_sorted
-}
-
-
-function exec_command(command, must_exit) {
-    # Executes $command using the built-in system() function.
-    # Returns true if command succedes, 0 if fail.
-    # If $must_exit is true, exit with the $command return code.
-    if (! command) {
-	printf("exec_command: <%s> seems not a valid command name\n", command) > "/dev/stderr"
-	return 0
-    }
-    if (0 != (ret = system(command))) {
-	printf ("exec_command: Error! <%s> exit status is: %d\n", command, ret) > "/dev/stderr"
-	if (must_exit)
-	    exit(ret)
-	else
-	    return 0
-    }
-    return 1
-}
-
-
-function run_command(command, nargs, args_array, must_exit, run_values,    i, cmd, ret, line, out) {
-    # Alternative method to run a command using <getline>,
-    # purposely avoiding the built-in system() function (see exec_command).
-    #
-    # Runs $command with arguments retrieved from $args_array.
-    # The latter must be a zero-based indexed array filled
-    # with $nargs number of arguments, used to build the
-    # command line to execute.
-    # If any errors occours during the command executions *and* must_exit is
-    # true, exits with ERRNO value, otherwise returns 0. If everything
-    # gone well, returns 1.
-    # $run_values is an optional array in which some information of the
-    # executed command will be stored, the indexes are:
-    # * output => command's stdout
-    # * retcode => <getline> last return code
-    # * errno => the ERRNO value, if errors occours, or false.
-    cmd = command " "
-    out = ""
-    for (i=0; i<nargs; i++)
-	cmd = cmd " " args_array[i]
-    run_values["cmdline"] = cmd
-    while ((ret = ((cmd) | getline line)) > 0)
-	out = out line "\n"
-    close(cmd)
-    run_values["output"] = out
-    run_values["retcode"] = ret
-    if (ret < 0) {
-	if (must_exit) {
-	    printf ("run_command: Error creating tempfile. ERRNO: %d\n", ERRNO) > "/dev/stderr"
-	    exit(ERRNO)
-	} else {
-	    run_values["errno"] = ERRNO
-	    return 0
-	}
-    }
-    run_values["errno"] = ""
-    return 1
-}
-
-
-function random(seed, upto, init, slow,    __rarr, __u, __i) {
-    # Convenience function to generate pseudo-random numbers
-    # using some builtin functions.
-    # $seed is a positive integer used (if $init is true) to initialize
-    # the random number generator (otherwise systime() is used).
-    # $upto (default to 1e6) is the upper limit of the
-    # generated number (from 0 to $upto - 1).
-    # If $slow is a true value, uses a slower method
-    # which adds an indirection :-D ...don't bother.
-    # To get random numbers call this function a first time as
-    #
-    # random(0, 0, 1)
-    #
-    # to set a casual seed, then call random() without arguments
-    # to get random values. Giving the same value to $seed
-    # assures predictable sequence from run to run.
-    if (! upto)
-	upto = 1e6
-    if (! seed)
-	seed = awk::systime() % 1000
-    if (init)
-        srand(seed)
-    if (slow) { # a slower alternative
-	delete __rarr
-	__u = 1000 * rand()
-	for (__i=0; __i<__u; __i++)
-	    __rarr[__i] = int(upto * rand())
-	return __rarr[int(upto * rand()) % arrlib::array_length(__rarr)]
-    } else
-	return int(upto * rand())
-}
-
-
-function check_load_module(name, is_ext,   cmd, exe) {
-    # Checks if the awk module or the extension $name
-    # is available in the system. If $name is an extension
-    # to load, the (optional) $is_ext parameter must be set to true.
-    # Return true if it's, else 0.
-
-    # For some reasons ARGV[0] is unreliable
-    # https://www.gnu.org/software/gawk/manual/gawk.html#index-dark-corner-31
-    # so we fall back to use a plain "awk" name.
-    #
-    #exe = ARGV[0] ? (match(ARGV[0], "awk") ? ARGV[0] : "awk") : "awk"
-    exe = "awk"
-    if (is_ext)
-        cmd = sprintf("%s -l %s 'BEGIN {exit(0)}'", exe, name)
-    else
-        cmd = sprintf("%s -i %s 'BEGIN {exit(0)}'", exe, name)
-    return exec_command(cmd)
 }
 
 
@@ -314,6 +206,124 @@ function force_type(val, type, dest,    _reg) {
     return 1
 }
 
+###########
+# BOOLEAN #
+###########
+
+function _mkbool(expression) {
+    # Private function for "creating" bool values. 
+    # Returns 1 if $expression evaluate to a true value, else 0.
+    # For (g)awk version without the mkbool function.
+    if (expression)
+	return 1
+    return 0
+}
+
+function cmkbool(expression) {
+    # Returns true if $expression evaluate to a true value, else false.
+    # For (g)awk version without the mkbool function.
+    # Uses either awkpot::_mkbool or,
+    # if available, the builtin mkbool function.
+    return @_cmkbool(expression)
+}
+
+
+function set_mkbool() {
+    # Checks and set a sort-of-a-kind "mkbool" function.
+    # For (g)awk version without the builtin mkbool function,
+    # sets the function used by cmkbool (awkpot::_mkbool function),
+    # otherwise uses the builtin mkbool function.
+    # Returns a string of the setted name.
+    if (! check_defined("mkbool"))
+	_cmkbool = "awkpot::_mkbool"
+    else
+	_cmkbool = "mkbool"
+    return _cmkbool
+}
+
+
+#######
+# SYS #
+#######
+
+function exec_command(command, must_exit) {
+    # Executes $command using the built-in system() function.
+    # Returns true if command succedes, 0 if fail.
+    # If $must_exit is true, exit with the $command return code.
+    if (! command) {
+	printf("exec_command: <%s> seems not a valid command name\n", command) > "/dev/stderr"
+	return 0
+    }
+    if (0 != (ret = system(command))) {
+	printf ("exec_command: Error! <%s> exit status is: %d\n", command, ret) > "/dev/stderr"
+	if (must_exit)
+	    exit(ret)
+	else
+	    return 0
+    }
+    return 1
+}
+
+
+function run_command(command, nargs, args_array, must_exit, run_values,    i, cmd, ret, line, out) {
+    # Alternative method to run a command using <getline>,
+    # purposely avoiding the built-in system() function (see exec_command).
+    #
+    # Runs $command with arguments retrieved from $args_array.
+    # The latter must be a zero-based indexed array filled
+    # with $nargs number of arguments, used to build the
+    # command line to execute.
+    # If any errors occours during the command executions *and* must_exit is
+    # true, exits with ERRNO value, otherwise returns 0. If everything
+    # gone well, returns 1.
+    # $run_values is an optional array in which some information of the
+    # executed command will be stored, the indexes are:
+    # * output => command's stdout
+    # * retcode => <getline> last return code
+    # * errno => the ERRNO value, if errors occours, or false.
+    cmd = command " "
+    out = ""
+    for (i=0; i<nargs; i++)
+	cmd = cmd " " args_array[i]
+    run_values["cmdline"] = cmd
+    while ((ret = ((cmd) | getline line)) > 0)
+	out = out line "\n"
+    close(cmd)
+    run_values["output"] = out
+    run_values["retcode"] = ret
+    if (ret < 0) {
+	if (must_exit) {
+	    printf ("run_command: Error creating tempfile. ERRNO: %d\n", ERRNO) > "/dev/stderr"
+	    exit(ERRNO)
+	} else {
+	    run_values["errno"] = ERRNO
+	    return 0
+	}
+    }
+    run_values["errno"] = ""
+    return 1
+}
+
+
+function check_load_module(name, is_ext,   cmd, exe) {
+    # Checks if the awk module or the extension $name
+    # is available in the system. If $name is an extension
+    # to load, the (optional) $is_ext parameter must be set to true.
+    # Return true if it's, else 0.
+
+    # For some reasons ARGV[0] is unreliable
+    # https://www.gnu.org/software/gawk/manual/gawk.html#index-dark-corner-31
+    # so we fall back to use a plain "awk" name.
+    #
+    #exe = ARGV[0] ? (match(ARGV[0], "awk") ? ARGV[0] : "awk") : "awk"
+    exe = "awk"
+    if (is_ext)
+        cmd = sprintf("%s -l %s 'BEGIN {exit(0)}'", exe, name)
+    else
+        cmd = sprintf("%s -i %s 'BEGIN {exit(0)}'", exe, name)
+    return exec_command(cmd)
+}
+
 
 function read_file_arr(filename, dest, start_index,   line, ret, idx) {
     # Reads $filename into the $dest array, one line per index
@@ -327,6 +337,44 @@ function read_file_arr(filename, dest, start_index,   line, ret, idx) {
     if (ret < 0)
 	printf ("read_file_arr: Error reading <%s>. ERRNO: %d\n", filename, ERRNO) > "/dev/stderr"
     close(filename)
+}
+
+
+########
+# MISC #
+########
+
+function set_sort_order(sort_type,    prev_sorted) {
+    # Sets PROCINFO["sorted_in"] to $sort_type
+    # Returns the previously sorting order string set.
+    @dprint(sprintf("set_sort_order: actual sorting: <%s>", PROCINFO["sorted_in"]))
+    prev_sorted = PROCINFO["sorted_in"]
+    PROCINFO["sorted_in"] = sort_type
+    @dprint(sprintf("set_sort_order: new sorting: <%s>", PROCINFO["sorted_in"]))
+    return prev_sorted
+}
+
+function random(seed, upto, init,    __rarr, __u, __i) {
+    # Convenience function to generate pseudo-random numbers
+    # using some builtin functions.
+    # $seed is a positive integer used (if $init is true) to initialize
+    # the random number generator (otherwise systime() is used).
+    # $upto (default to 1e6) is the upper limit of the
+    # generated number (from 0 to $upto - 1).
+    # To get random numbers call this function a first time as
+    #
+    # random(0, 0, 1)
+    #
+    # to set a casual seed, then call random() without arguments
+    # to get random values. Giving the same value to $seed
+    # assures predictable sequence from run to run.
+    if (! upto)
+	upto = 1e6
+    if (! seed)
+	seed = awk::systime() % 1000
+    if (init)
+        srand(seed)
+    return int(upto * rand())
 }
 
 

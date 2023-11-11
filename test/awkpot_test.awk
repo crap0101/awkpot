@@ -132,6 +132,17 @@ BEGIN {
     testing::assert_equal(awkpot::equals(0, ""), awkpot::equals_typed(0, ""), 1, "> equals/typed 0 \"\"")
     testing::assert_equal(awkpot::equals(0, "", 1), awkpot::equals_typed(0, ""), 1, "> ! equals/typed 0 \"\"")
 
+    # TEST id
+    testing::assert_equal(awkpot::id(2), 2, 1, "> id 2 2")
+    testing::assert_equal(awkpot::id(0), 0, 1, "> id 0 0")
+    testing::assert_equal(awkpot::id("foo"), "foo", 1, "> id foo foo")
+    testing::assert_equal(awkpot::id(""), "", 1, "> id ~empty~")
+
+    # TEST len
+    testing::assert_true(awkpot::equals(awkpot::len("foo"), length("foo")), 1, "> len foo foo")
+    testing::assert_true(awkpot::equals(awkpot::len(""), length("")), 1, "> len ~empty~")
+    testing::assert_true(awkpot::equals(awkpot::len("f"), length("f")), 1, "> len f f")
+
     # TEST check_defined
     @dprint("* test check_defined:")
     testing::assert_true(awkpot::check_defined("split"), 1, "> check_defined(\"split\")")
@@ -336,15 +347,6 @@ BEGIN {
 	for (i=0; i<tot; i++)
 	    __rarr[awkpot::random()]
 	@dprint(sprintf("> randomness on %5d extraction: %3d%% [default method]",  tot, (100 * arrlib::array_length(__rarr)) / tot))
-    }
-    # slower
-    awkpot::random(0, 0, 1)
-    for (_i=1; _i<=5; _i++) {
-	delete __rarr
-	tot = (10 ^ _i) % 30000
-	for (i=0; i<tot; i++)
-	    __rarr[awkpot::random(0,0,0,1)]
-	@dprint(sprintf("> randomness on %5d extraction: %3d%% [slower method]",  tot, (100 * arrlib::array_length(__rarr)) / tot))
     }
 
     # report
