@@ -36,7 +36,40 @@ function set_dprint(arg) {
 }
 
 
-function get_fmt(str, conv, maxspace, position,    len, pad) {
+function get_fmt(str, conv, maxspace, position,    len, fstr, lpad, rpad) {
+    # Given a string $str and a conversion specifier $conv optionally
+    # with a precision field (like "d", "u", ".2f", etc... default to "s")
+    # builds a format string suitable to be used with (s)printf
+    # for print $str in a space of $maxspace chars justified
+    # as per $position, which must be one of "<c>":
+    # "<" means justify to the left,
+    # "c" means centered,
+    # ">" means justify to the right.
+    # If $maxspace < 1, returns the format string without any padding.
+    if (! conv)
+	conv = "s"
+    fstr = sprintf("%" conv, str)
+    len = length(fstr)
+    if (maxspace < 1 || maxspace < (len-2))
+	return "%" conv
+    if (! position)
+	position = "<"
+    switch (position) {
+	case "<":
+	    return sprintf("%%-%d%s", maxspace, conv)
+        case ">":
+	    return sprintf("%%%d%s", maxspace, conv)
+	case "c":
+	    lpad = sprintf("%*s", (maxspace/2) - (len/2), " ")
+	    rpad = sprintf("%*s", maxspace - len - length(lpad), " ")
+	    return sprintf("%s%%%s%s", lpad, conv, rpad)
+	default:
+	    printf("ERROR: get_fmt: unknown value <%s> for $position", position) > "/dev/stderr"
+	    exit(1)
+    }
+}
+
+function __get_fmt(str, conv, maxspace, position,    len, pad) {
     # Given a string $str and a conversion specifier $conv ("d", "s", ".2f", etc),
     # builds a format string suitable to be used with (s)printf
     # for print $str in a space of $maxspace chars justified
@@ -47,14 +80,17 @@ function get_fmt(str, conv, maxspace, position,    len, pad) {
     len = length(str)
     if (! maxspace || maxspace < (len-2))
 	return "%s"
-    if (!position)
+    if (! position)
 	position = "<"
     switch (position) {
 	case "<":
+	    print "XXXXXXXXXXXXXXXXXXXXXXXXXX", "<"
 	    return sprintf("%%-%d%s", maxspace, conv)
-        case ">":
+	case ">":
+	    print "XXXXXXXXXXXXXXXXXXXXXXXXXX", ">"
 	    return sprintf("%%%d%s", maxspace, conv)
 	case "c":
+	    print "XXXXXXXXXXXXXXXXXXXXXXXXXX", "c"
 	    pad = sprintf("%*s", (maxspace/2) - (len/2), " ")
 	    return sprintf("%s%%%s%s", pad, conv, pad)
     }

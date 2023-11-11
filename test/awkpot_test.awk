@@ -159,7 +159,6 @@ BEGIN {
 
     @dprint("* set_mkbool");
     bool_f = awkpot::set_mkbool()
-    print awkpot::cmkbool(1)
     testing::assert_false(awkpot::check_defined("awkpot::_cmkbool"), 1, "> ! check_defined(\"_cmkbool\")")
     testing::assert_true(awkpot::check_defined("awkpot::_cmkbool", 1), 1, "> check_defined(\"_cmkbool\", 1)")
     testing::assert_true(bool_f, 1, "bool_f name set")
@@ -346,9 +345,40 @@ BEGIN {
 	tot = (10 ^ _i) % 30000
 	for (i=0; i<tot; i++)
 	    __rarr[awkpot::random()]
-	@dprint(sprintf("> randomness on %5d extraction: %3d%% [default method]",  tot, (100 * arrlib::array_length(__rarr)) / tot))
+	@dprint(sprintf("> randomness on %5d extraction: %3d%%",  tot, (100 * arrlib::array_length(__rarr)) / tot))
     }
 
+    # TEST get_fmt
+    for (i=1; i<10e5; i*=10) {
+	conv = i "d"
+	fmt = awkpot::get_fmt(i, conv)
+	str = sprintf(fmt, i)
+	testing::assert_equal(length(str), i, 1, sprintf("> get_fmt basic length [%d]", i))
+    }
+    for (i=1; i<10e5; i*=10) {
+	fmt = awkpot::get_fmt(i, "d", 15)
+	str = sprintf(fmt, i)
+	testing::assert_equal(length(str), 15, 1, sprintf("> get_fmt maxspace [%d]", i))
+    }
+
+    i = 9
+    fmt = awkpot::get_fmt(i, "d", 15, "<")
+    str = sprintf(fmt, i)
+    testing::assert_true(str ~ /^[0-9]\s+/, 1, "> get_fmt padding <")
+
+    fmt = awkpot::get_fmt(i, "d", 15, "c")
+    str = sprintf(fmt, i)
+    testing::assert_true(str ~ /^\s+[0-9]\s+$/, 1, "> get_fmt padding c")
+
+    fmt = awkpot::get_fmt(i, "d", 15, ">")
+    str = sprintf(fmt, i)
+    testing::assert_true(str ~ /\s+[0-9]$/, 1, "> get_fmt padding >")
+
+    s = "foobar"
+    fmt = awkpot::get_fmt(s, "", 2)
+    str = sprintf(fmt, s)
+    testing::assert_equal(length(str), length(s), 1, "> get_fmt string overload")
+    
     # report
     testing::end_test_report()
     testing::report()
