@@ -143,6 +143,12 @@ BEGIN {
     testing::assert_true(awkpot::equals(awkpot::len(""), length("")), 1, "> len ~empty~")
     testing::assert_true(awkpot::equals(awkpot::len("f"), length("f")), 1, "> len f f")
 
+    # TEST check_assigned
+    testing::assert_false(awkpot::check_assigned(yyyyyyyyyyyyyyyyyyyyy), 1, "> ! check_assigned")
+    testing::assert_false(awkpot::check_assigned(yyyyyyyyyyyyyyyyyyyyy), 1, "> ! check_assigned (again)")
+    yyyyyyyyyyyyyyyyyyyyy = 0
+    testing::assert_true(awkpot::check_assigned(yyyyyyyyyyyyyyyyyyyyy), 1, "> check_assigned")
+    
     # TEST check_defined
     @dprint("* test check_defined:")
     testing::assert_true(awkpot::check_defined("split"), 1, "> check_defined(\"split\")")
@@ -379,7 +385,7 @@ BEGIN {
     str = sprintf(fmt, s)
     testing::assert_equal(length(str), length(s), 1, "> get_fmt string overload")
 
-    # TEST strrepeat #XXX+TODO
+    # TEST strrepeat
     s = "spam"
     sep = ":"
     testing::assert_equal(awkpot::strrepeat(s, 0, sep), s, 1, "> strrepeat (count=0)")

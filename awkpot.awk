@@ -99,11 +99,21 @@ function len(x) {
 }
 
 
+function check_assigned(name) {
+    # Returns true if $name already got a value,
+    # false if untyped or unassigned.
+    if (awk::typeof(name) == "untyped" || awk::typeof(name) == "unassigned")
+	return 0
+    return 1
+}
+
+
 function check_defined(funcname, check_id) {
     # Checks if $funcname is available, searching
     # in the FUNCTAB array.
     # If $check_id is true, check also the
     # PROCINFO["identifiers"] array.
+    # In the latter case, can be used to check any other names.
     if (! (funcname in FUNCTAB)) {
 	if (! check_id) {
 	    return 0
