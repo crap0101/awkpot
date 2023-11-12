@@ -378,6 +378,30 @@ BEGIN {
     fmt = awkpot::get_fmt(s, "", 2)
     str = sprintf(fmt, s)
     testing::assert_equal(length(str), length(s), 1, "> get_fmt string overload")
+
+    # TEST strrepeat #XXX+TODO
+    s = "spam"
+    sep = ":"
+    testing::assert_equal(awkpot::strrepeat(s, 0, sep), s, 1, "> strrepeat (count=0)")
+    testing::assert_equal(awkpot::strrepeat(s, 1), s, 1, "> strrepeat (count=1)")
+    ns = awkpot::strrepeat(s, 2, sep)
+    testing::assert_equal(length(s)*2+length(sep), length(ns), "> strrepeat (x2 + sep)")
+
+    delete __arr
+    awkpot::random(0,0,1)
+    split("foo::bar:1:xxxxxxxxx", __arr, ":")
+    for (i in __arr) {
+	s = __arr[i]
+	len = length(s)
+	count = awkpot::random(0, 50)
+	ns = awkpot::strrepeat(s, count)
+	nlen = length(ns)
+	testing::assert_equal(len*count, nlen, 1, sprintf("> strrepeat <%s> (%d) => (%d)", s, count, nlen))
+	ns = awkpot::strrepeat(s, count, s)
+	nlen = length(ns)
+	testing::assert_equal(len*count+len*(count-1), nlen, 1, sprintf("> strrepeat <%s> (%d) [+ sep] => (%d)", s, count, nlen))
+    }
+
     
     # report
     testing::end_test_report()

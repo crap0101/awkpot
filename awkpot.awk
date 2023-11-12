@@ -50,7 +50,7 @@ function get_fmt(str, conv, maxspace, position,    len, fstr, lpad, rpad) {
 	conv = "s"
     fstr = sprintf("%" conv, str)
     len = length(fstr)
-    if (maxspace < 1 || maxspace < (len-2))
+    if (maxspace < 1 || len >= maxspace)
 	return "%" conv
     if (! position)
 	position = "<"
@@ -60,8 +60,8 @@ function get_fmt(str, conv, maxspace, position,    len, fstr, lpad, rpad) {
         case ">":
 	    return sprintf("%%%d%s", maxspace, conv)
 	case "c":
-	    lpad = sprintf("%*s", (maxspace/2) - (len/2), " ")
-	    rpad = sprintf("%*s", maxspace - len - length(lpad), " ")
+	    lpad = sprintf("%*s", int((maxspace - len) / 2), "")
+	    rpad = sprintf("%*s", maxspace - len - length(lpad), "")
 	    return sprintf("%s%%%s%s", lpad, conv, rpad)
 	default:
 	    printf("ERROR: get_fmt: unknown value <%s> for $position", position) > "/dev/stderr"
@@ -69,6 +69,18 @@ function get_fmt(str, conv, maxspace, position,    len, fstr, lpad, rpad) {
     }
 }
 
+
+function strrepeat(str, count, sep) {
+    # Returns $str joined $count times with itself,
+    # optionally separated by $sep.
+    # If count < 2 returns $str.
+    if (count < 2)
+	return str
+    new_str = str
+    while (--count)
+	new_str = new_str sep str
+    return new_str
+}
 
 ##################
 # VARS AND TYPES #
