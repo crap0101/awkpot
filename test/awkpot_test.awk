@@ -49,9 +49,9 @@ BEGIN {
     testing::assert_false(run["errno"], "", 1, "> ! run_command ERRNO")
 
     awkpot::read_file_arr(t, arread, 4)
-    s_arr = arrlib::sprintf_val(arread, "\n")
+    s_arr = arrlib::sprintf_vals(arread, "\n")
     s_arr = s_arr "\n" # append a newline cuz run_command outputs this way
-    testing::assert_equal(run["output"], s_arr, 1, "> run_command output == (sprintf_val) arread")
+    testing::assert_equal(run["output"], s_arr, 1, "> run_command output == (sprintf_vals) arread")
     delete arread
     
     # TEST dprint_real, dprint_fake, 
@@ -68,7 +68,7 @@ BEGIN {
     ret = awkpot::run_command(cmd, 0, args)
     awkpot::read_file_arr(t, arread)
     testing::assert_equal(0, arrlib::array_length(arread), 1, "> dprint fake (length)")
-    testing::assert_equal("", arrlib::sprintf_val(arread), 1, "> dprint fake (sprintf)")
+    testing::assert_equal("", arrlib::sprintf_vals(arread), 1, "> dprint fake (sprintf)")
     testing::assert_true(arrlib::is_empty(arread), 1, "> dprint fake (is_empty)")
     delete arread
 
@@ -80,7 +80,7 @@ BEGIN {
     @dprint("* arread:") && arrlib::printa(arread)
     testing::assert_not_equal(0, arrlib::array_length(arread), 1, "> set_dprint (real) (length)")
     testing::assert_equal(2, arrlib::array_length(arread), 1, "> set_dprint (real) (length eq)")
-    testing::assert_not_equal("", arrlib::sprintf_val(arread), 1, "> set_dprint (real) (sprintf !eq)")
+    testing::assert_not_equal("", arrlib::sprintf_vals(arread), 1, "> set_dprint (real) (sprintf !eq)")
     delete arread
     sys::rm(t)
 
