@@ -82,9 +82,95 @@ function strrepeat(str, count, sep) {
     return new_str
 }
 
+###############
+# GAWK INSIDE #
+###############
+
+
+function get_version() {
+    return PROCINFO["version"]
+}
+
+function cmp_version(v1, v2, cmp, major, minor, patch,    ret) {   #XXX+TODO: tests
+    # 5.2.0 min for mkbool
+    # Compares the two (g)awk version string $v1 and $v2
+    # using the $cmp function (indirect call) which must
+    # returns true if the two arguments compares equal.
+    # $major, $minor and $patch can be sets to a true value
+    # for comparing only the given part of the version number.
+    # If $v1 is false gets the in-use gawk version.
+    # Returns true if $v1 and $v2 compares equal, false otherwise.
+    if (! v1)
+	v1 = get_version()
+    if (major || minor || patch) {
+	ret = 0
+	split(v1, v1_arr, ".")
+	split(v2, v2_arr, ".")
+	if (major)
+	    if (! (ret = @cmp(v1_arr[1], v2_arr[1])))
+		return 0
+	if (minor)
+	    if (! (ret = @cmp(v1_arr[2], v2_arr[2])))
+		return 0
+	if (patch)
+	    if (! (ret = @cmp(v1_arr[3], v2_arr[3])))
+		return 0
+	return ret
+    } else {
+	return @cmp(v1, v2)
+    }
+}
+
+##############
+# COMPARISON #
+##############
+
+# XXX+TODO : doc, tests
+function eq(a, b) {
+    return (a == b)
+}
+
+function ne(a, b) {
+    return (a != b)
+}
+
+function gt(a, b) {
+    return (a > b)
+}
+
+function ge(a, b) {
+    return (a >= b)
+}
+
+function lt(a, b) {
+    return (a < b)
+}
+
+function le(a, b) {
+    return (a <= b)
+}
+
+
 ##################
 # VARS AND TYPES #
 ##################
+
+function make_regex(val) { #XXX+TODO: tests
+    # Returns a regexp-typed
+    # variable from the value $val.
+    # XXX+NOTE: works in (g)awk >= 5.0.0
+    re = @//
+    sub(//, str, re)
+    return re 
+}
+
+function make_strnum(val,    __a) { # XXX+TODO: tests
+    # Returns a strnum-typed variable for the value $val
+    # (if can be intrepreted as a numeric string).
+    # See https://www.gnu.org/software/gawk/manual/gawk.html#String-Type-versus-Numeric-Type
+    split(val, __a, "")
+    return __a[1]
+}
 
 function id(x) {
     # Identity function.
@@ -93,8 +179,9 @@ function id(x) {
 
 function len(x) {
     # Returns the length of $x using the builtin length() function.
-    # XXX: may be a bug in passing the builtin length for indirect function call,
-    # so we fall back with this.
+    # NOTE: workaround for a bug in gawk version < 5.3.0 (at list in gawk 5.1.0)
+    # when using the builtin's <length> function as indirect function call.
+    # Should be used - for example - as the 2nd parameter of the arrlib::max_val function.
     return length(x)
 }
 
@@ -168,23 +255,34 @@ function equals_typed(val1, val2) {
 }
 
 
-function force_type(val, type, dest,    _reg) {
-    # Tries to force the type of $val to $type.
-    # Save conversion and other info in the $dest array.
+function force_type(val, type, dest) {   #XXX+TODO: add tests + strnum, up doc strnum
+    # Tries to force the type of $val to $type
+    # mantaining the $val's meaning.
+    # Saves conversion and other infos in the $dest array.
+    # $dest array's elements are indexed as follow:
+    # * "val" is the value passed to the function
+    # * "val_type" is the $val type as per typeof()
+    # * "newval" is the value after the tentative type coercion
+    # * "newval_type" is the (probably new) "newval"'s type,
+    #   as per the $type argument.
     # Returns 1 if the conversion succeeded or 0 if errors.
     #
-    # Supported $val types:
-    # * string, number, bool, strnum, regexp, unassigned, untyped
-    # Supported $type values:
-    # * "string", "number", "regexp", "bool"
+    # SUPPORTED $val types:
+    # * string, number, number|bool, strnum, regexp, unassigned, untyped
+    # SUPPORTED $type values:
+    # * "string", "number", "regexp", "number|bool", "strnum"
+    #
     # NOTE: $type bool require a (g)awk version with the builtin
-    # mkbool function. In Sostitution the awkpot::set_mkbool
+    # mkbool function. In sostitution the awkpot::set_mkbool
     # function can be used to set the custom _mkbool in his place,
     # however the returned value will be of type "number").
-    # Unsupported conversion:
+    #
+    # UNSUPPORTED CONVERSION:
     # * regexp to (number|bool|strnum)
-    # * any type but regexp to regexp
     # * unassigned and untyped conversion $type are clearly not an option in any case :).
+    #
+    # Anyway, always checks the function's exit status to known if the
+    # given result had any means.
     delete dest
     dest["val"] = val
     dest["val_type"] = awk::typeof(val)
@@ -197,6 +295,15 @@ function force_type(val, type, dest,    _reg) {
 	    else
 		dest["newval"] = val
 	    break
+        case "strnum":
+	    # XXX+TODO: strtonum(regex) gives inconsistent results between gawk version
+	    if (dest["val_type"] == "regexp") {
+		printf ("force_type: Cannot convert from <%s> to <%s> \n",
+			dest["val_type"], type) > "/dev/stderr"
+		return 0
+	    }
+	    dest["newval"] = make_strnum(val)
+	    break
         case "number":
 	    if (dest["val_type"] == "regexp") {
 		printf ("force_type: Cannot convert from <%s> to <%s> \n",
@@ -208,32 +315,34 @@ function force_type(val, type, dest,    _reg) {
 		dest["newval"] = awk::strtonum(val)
 	    }
 	    break
-	case "bool":
+	case "number|bool":
 	    if (dest["val_type"] == "regexp") {
 		printf ("force_type: Cannot convert from <%s> to <%s> \n",
 			dest["val_type"], type) > "/dev/stderr"
 		return 0
-	    } else if (dest["val_type"] == "bool") {
+	    } else if (dest["val_type"] == "number|bool") {
 		dest["newval"] = val		
 	    } else {
 		dest["newval"] = cmkbool(val)
 	    }
 	    break
-	case "regexp": #XXX+TODO: find a workaround (c extension?)
+	case "regexp": #XXX+TODO: find a workaround...
 	    # NOTE: https://www.gnu.org/software/gawk/manual/gawk.html#Strong-Regexp-Constants
 	    # regexp-typed variable creation on runtime don't works consistently on gawk 5.1
-	    if (dest["val_type"] != "regexp") {
-		printf ("force_type: Cannot convert from <%s> to <%s> \n",
-			dest["val_type"], type) > "/dev/stderr"
-		return 0
-	    } else
+	    # ...try to make a regex with <make_regex>, typecheck at the end.
+	    if (dest["val_type"] == "regexp") {
 		dest["newval"] = val
+	    } else {
+		dest["newval"] = make_regex(val)
+	    }
 	    break
         default:
-	    printf ("force_type: Unkown conversion type <%s>\n", type) > "/dev/stderr"
+	    printf ("force_type: Unknown conversion type <%s>\n", type) > "/dev/stderr"
 	    return 0
     }
     dest["newval_type"] = awk::typeof(dest["newval"])
+    if (dest["newval_type"] != type)
+	return 0
     return 1
 }
 
@@ -242,7 +351,7 @@ function force_type(val, type, dest,    _reg) {
 ###########
 
 function _mkbool(expression) {
-    # Private function for "creating" bool values. 
+    # Private function for "creating" bool values.
     # Returns 1 if $expression evaluate to a true value, else 0.
     # For (g)awk version without the mkbool function.
     if (expression)

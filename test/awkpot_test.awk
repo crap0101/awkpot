@@ -222,8 +222,8 @@ BEGIN {
 	testing::assert_equal(force_arr["newval_type"], "number", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
 	@dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
 			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
-
-	testing::assert_true(awkpot::force_type(str_arr[i], "bool", force_arr),
+	# for gawk without mkbool, force_type will return false...
+	testing::assert_nothing(awkpot::force_type(str_arr[i], "number|bool", force_arr),
 			     1, sprintf("> force_type <%s> (<%s>) to bool", str_arr[i], awk::typeof(str_arr[i])))
 	testing::assert_true(force_arr["newval_type"] == "number" || force_arr["newval_type"] == "number|bool",
 			     1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
@@ -248,7 +248,7 @@ BEGIN {
 	@dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
 			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
 
-	testing::assert_true(awkpot::force_type(strnum_arr[i], "bool", force_arr),
+	testing::assert_nothing(awkpot::force_type(strnum_arr[i], "number|bool", force_arr),
 			     1, sprintf("> force_type <%s> (<%s>) to bool", strnum_arr[i], awk::typeof(strnum_arr[i])))
 	testing::assert_true(force_arr["newval_type"] == "number" || force_arr["newval_type"] == "number|bool",
 			     1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
@@ -274,7 +274,7 @@ BEGIN {
 	@dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
 			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
 
-	testing::assert_true(awkpot::force_type(num_arr[i], "bool", force_arr),
+	testing::assert_nothing(awkpot::force_type(num_arr[i], "number|bool", force_arr),
 			     1, sprintf("> force_type <%s> (<%s>) to bool", num_arr[i], awk::typeof(num_arr[i])))
 	testing::assert_true(force_arr["newval_type"] == "number" || force_arr["newval_type"] == "number|bool",
 			     1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
@@ -299,7 +299,7 @@ BEGIN {
 	@dprint(sprintf("* (failed) forcing <%s> gets <%s> (type: <%s>)",
 			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
 
-	testing::assert_false(awkpot::force_type(reg_arr[i], "bool", force_arr),
+	testing::assert_false(awkpot::force_type(reg_arr[i], "number|bool", force_arr),
 			     1, sprintf("> ! force_type <%s> (<%s>) to bool", reg_arr[i], awk::typeof(reg_arr[i])))
 	@dprint(sprintf("* (failed) forcing <%s> gets <%s> (type: <%s>)",
 			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
@@ -395,7 +395,7 @@ BEGIN {
 
     delete __arr
     awkpot::random(0,0,1)
-    split("foo::bar:1:xxxxxxxxx", __arr, ":")
+    split("foo::bar:1:yyyyyyyyy", __arr, ":")
     for (i in __arr) {
 	s = __arr[i]
 	len = length(s)
