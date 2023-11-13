@@ -239,8 +239,10 @@ function equals(val1, val2, type) {
 	if (awk::isarray(val2))
 	    return 0
 	else {
-	    if (! type)
+	    if (! type) {
+		#printf "eeeeeeee: <%s> (%s) | <%s> (%s) [%s]\n", val1, awk::typeof(val1), val2, awk::typeof(val2), val1 == val2
 		return val1 == val2
+	    }
 	    return equals_typed(val1, val2)
 	}
     }
