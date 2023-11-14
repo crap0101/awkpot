@@ -91,7 +91,7 @@ function get_version() {
     return PROCINFO["version"]
 }
 
-function cmp_version(v1, v2, cmp, major, minor, patch,    ret) {   #XXX+TODO: tests
+function cmp_version(v1, v2, cmp, major, minor, patch,    ret) {
     # 5.2.0 min for mkbool
     # Compares the two (g)awk version string $v1 and $v2
     # using the $cmp function (indirect call) which must
@@ -155,20 +155,21 @@ function le(a, b) {
 # VARS AND TYPES #
 ##################
 
-function make_regex(val) { #XXX+TODO: tests
+function make_regex(val) {
     # Returns a regexp-typed
     # variable from the value $val.
-    # XXX+NOTE: works in (g)awk >= 5.0.0
+    # XXX+NOTE: works in (g)awk > 5.1.0
+    # In prior versions returns a string.
     re = @//
-    sub(//, str, re)
+    sub(//, val, re)
     return re 
 }
 
-function make_strnum(val,    __a) { # XXX+TODO: tests
-    # Returns a strnum-typed variable for the value $val
-    # (if can be intrepreted as a numeric string).
+function make_strnum(val,    __a) {
+    # Returns a strnum-typed variable for the value $val,
+    # if can be interpreted as a numeric string.
     # See https://www.gnu.org/software/gawk/manual/gawk.html#String-Type-versus-Numeric-Type
-    split(val, __a, "")
+    split(val, __a, ":")
     return __a[1]
 }
 
@@ -257,7 +258,7 @@ function equals_typed(val1, val2) {
 }
 
 
-function force_type(val, type, dest) {   #XXX+TODO: add tests + strnum, up doc strnum
+function force_type(val, type, dest) {
     # Tries to force the type of $val to $type
     # mantaining the $val's meaning.
     # Saves conversion and other infos in the $dest array.
@@ -272,25 +273,27 @@ function force_type(val, type, dest) {   #XXX+TODO: add tests + strnum, up doc s
     # SUPPORTED $val types:
     # * string, number, number|bool, strnum, regexp, unassigned, untyped
     # SUPPORTED $type values:
-    # * "string", "number", "regexp", "number|bool", "strnum"
+    # * string, number, regexp, number|bool, strnum, unassigned, untyped
     #
     # NOTE: $type bool require a (g)awk version with the builtin
     # mkbool function. In sostitution the awkpot::set_mkbool
     # function can be used to set the custom _mkbool in his place,
     # however the returned value will be of type "number").
     #
-    # UNSUPPORTED CONVERSION:
+    # NOT SO SUPPORTED CONVERSION:
     # * regexp to (number|bool|strnum)
-    # * unassigned and untyped conversion $type are clearly not an option in any case :).
+    # 	Always check the func retcode for consistent results.
     #
-    # Anyway, always checks the function's exit status to known if the
+    # Anyway, always checks the function's return code to known if the
     # given result had any means.
     delete dest
     dest["val"] = val
     dest["val_type"] = awk::typeof(val)
-    dest["newval"]
+    dest["newval"] # default to unassigned|untyped
     dest["newval_type"]
     switch (type) {
+	case "unassigned": case "untyped":
+	    break
 	case "string":
 	    if (dest["val_type"] != "string")
 		dest["newval"] = val ""
@@ -298,19 +301,21 @@ function force_type(val, type, dest) {   #XXX+TODO: add tests + strnum, up doc s
 		dest["newval"] = val
 	    break
         case "strnum":
-	    # XXX+TODO: strtonum(regex) gives inconsistent results between gawk version
-	    if (dest["val_type"] == "regexp") {
+	    dest["newval"] = make_strnum(val)
+	    if (dest["newval"] != (make_strnum(val) + 0)) {
 		printf ("force_type: Cannot convert from <%s> to <%s> \n",
 			dest["val_type"], type) > "/dev/stderr"
 		return 0
 	    }
-	    dest["newval"] = make_strnum(val)
 	    break
         case "number":
 	    if (dest["val_type"] == "regexp") {
-		printf ("force_type: Cannot convert from <%s> to <%s> \n",
-			dest["val_type"], type) > "/dev/stderr"
-		return 0
+		dest["newval"] = make_strnum(val) + 0
+		if (dest["newval"] != make_strnum(val)) {
+		    printf ("force_type: Cannot convert from <%s> to <%s> \n",
+			    dest["val_type"], type) > "/dev/stderr"
+		    return 0
+		}
 	    } else if (dest["val_type"] == "number") {
 		dest["newval"] = val
 	    } else {
@@ -319,9 +324,12 @@ function force_type(val, type, dest) {   #XXX+TODO: add tests + strnum, up doc s
 	    break
 	case "number|bool":
 	    if (dest["val_type"] == "regexp") {
-		printf ("force_type: Cannot convert from <%s> to <%s> \n",
-			dest["val_type"], type) > "/dev/stderr"
-		return 0
+		dest["newval"] = cmkbool(make_strnum(val) + 0)
+		if (dest["newval"] != cmkbool(make_strnum(val))) {
+		    printf ("force_type: Cannot convert from <%s> to <%s> \n",
+			    dest["val_type"], type) > "/dev/stderr"
+		    return 0
+		}
 	    } else if (dest["val_type"] == "number|bool") {
 		dest["newval"] = val		
 	    } else {
@@ -343,9 +351,7 @@ function force_type(val, type, dest) {   #XXX+TODO: add tests + strnum, up doc s
 	    return 0
     }
     dest["newval_type"] = awk::typeof(dest["newval"])
-    if (dest["newval_type"] != type)
-	return 0
-    return 1
+    return (dest["newval_type"] == type)
 }
 
 ###########

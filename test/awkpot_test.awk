@@ -9,7 +9,7 @@
 # https://github.com/crap0101/awk_sysutils
 
 # NOTES:
-# * Some tests uses system's commands: which, seq, awk          # :D
+# * Some tests uses system's commands: which, seq, awk        # :D
 # and some non-standard ones:  _____x__foo, xx_foo__bar__xx   # ^|^
 # * Others requires the sysutils extension (see some lines above).
 
@@ -195,15 +195,19 @@ BEGIN {
     #print awkpot::check_defined("mkbool")
     split("foo::2,3", str_arr, ":")
     str_arr[22]
+
     split("1:2.3:1e2", strnum_arr, ":")
     strnum_arr[23]
+
     num_arr[0]=0
     num_arr[1]=11
     num_arr[2]=1e2
     num_arr[3]
+    
     reg_arr[0] = @/^foo/
     reg_arr[1] = @/1/
     @dprint("* test force_type:")
+
     for (i in str_arr) {
 	testing::assert_true(awkpot::force_type(str_arr[i], "string", force_arr),
 			     1, sprintf("> force_type <%s> (<%s>) to string", str_arr[i], awk::typeof(str_arr[i])))
@@ -238,6 +242,7 @@ BEGIN {
 	@dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
 			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
     }
+
     for (i in strnum_arr) {
 	testing::assert_true(awkpot::force_type(strnum_arr[i], "string", force_arr),
 			     1, sprintf("> force_type <%s> (<%s>) to string", strnum_arr[i], awk::typeof(strnum_arr[i])))
@@ -271,6 +276,7 @@ BEGIN {
 	@dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
 			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
     }
+
     for (i in num_arr) {
 	testing::assert_true(awkpot::force_type(num_arr[i], "string", force_arr),
 			     1, sprintf("> force_type <%s> (<%s>) to string", num_arr[i], awk::typeof(num_arr[i])))
@@ -305,27 +311,48 @@ BEGIN {
 	@dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
 			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
     }
-    for (i in reg_arr) {
-	testing::assert_true(awkpot::force_type(reg_arr[i], "string", force_arr),
-			     1, sprintf("> force_type <%s> (<%s>) to string", reg_arr[i], awk::typeof(reg_arr[i])))
-	testing::assert_equal(force_arr["newval_type"], "string", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+
+    # reg_arr:
+    testing::assert_true(awkpot::force_type(reg_arr[0], "string", force_arr),
+			 1, sprintf("> force_type <%s> (<%s>) to string", reg_arr[0], awk::typeof(reg_arr[0])))
+    testing::assert_equal(force_arr["newval_type"], "string", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+    @dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
+		    force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
+    testing::assert_true(awkpot::force_type(reg_arr[0], "regexp", force_arr),
+			 1, sprintf("> force_type <%s> (<%s>) to regexp", reg_arr[0], awk::typeof(reg_arr[0])))
+    testing::assert_equal(force_arr["newval_type"], "regexp", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+    @dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
+		    force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
+    testing::assert_false(awkpot::force_type(reg_arr[0], "number", force_arr),
+			  1, sprintf("> ! force_type <%s> (<%s>) to number", reg_arr[0], awk::typeof(reg_arr[0])))
+    @dprint(sprintf("* (failed) forcing <%s> gets <%s> (type: <%s>)",
+		    force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
+    
+    testing::assert_false(awkpot::force_type(reg_arr[0], "number|bool", force_arr),
+			  1, sprintf("> ! force_type <%s> (<%s>) to bool", reg_arr[0], awk::typeof(reg_arr[0])))
+    @dprint(sprintf("* (failed) forcing <%s> gets <%s> (type: <%s>)",
+		    force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
+    testing::assert_true(awkpot::force_type(reg_arr[1], "string", force_arr),
+			 1, sprintf("> force_type <%s> (<%s>) to string", reg_arr[1], awk::typeof(reg_arr[1])))
+    testing::assert_equal(force_arr["newval_type"], "string", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+    @dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
+		    force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
+    testing::assert_true(awkpot::force_type(reg_arr[1], "regexp", force_arr),
+			 1, sprintf("> force_type <%s> (<%s>) to regexp", reg_arr[1], awk::typeof(reg_arr[1])))
+    testing::assert_equal(force_arr["newval_type"], "regexp", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+    @dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
+		    force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
+    testing::assert_true(awkpot::force_type(reg_arr[1], "number", force_arr),
+			  1, sprintf("> force_type <%s> (<%s>) to number", reg_arr[1], awk::typeof(reg_arr[1])))
+    if (! awkpot::check_defined("mkbool")) {
+	testing::assert_false(awkpot::force_type(reg_arr[1], "number|bool", force_arr),
+			      1, sprintf("> force_type <%s> (<%s>) to bool", reg_arr[1], awk::typeof(reg_arr[1])))
 	@dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
 			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
-
-	testing::assert_true(awkpot::force_type(reg_arr[i], "regexp", force_arr),
-			     1, sprintf("> force_type <%s> (<%s>) to regexp", reg_arr[i], awk::typeof(reg_arr[i])))
-	testing::assert_equal(force_arr["newval_type"], "regexp", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+    } else {
+	testing::assert_true(awkpot::force_type(reg_arr[1], "number|bool", force_arr),
+			     0, sprintf("> force_type <%s> (<%s>) to bool", reg_arr[1], awk::typeof(reg_arr[1])))
 	@dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
-			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
-
-	testing::assert_false(awkpot::force_type(reg_arr[i], "number", force_arr),
-			     1, sprintf("> ! force_type <%s> (<%s>) to number", reg_arr[i], awk::typeof(reg_arr[i])))
-	@dprint(sprintf("* (failed) forcing <%s> gets <%s> (type: <%s>)",
-			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
-
-	testing::assert_false(awkpot::force_type(reg_arr[i], "number|bool", force_arr),
-			     1, sprintf("> ! force_type <%s> (<%s>) to bool", reg_arr[i], awk::typeof(reg_arr[i])))
-	@dprint(sprintf("* (failed) forcing <%s> gets <%s> (type: <%s>)",
 			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
     }
 
@@ -426,13 +453,78 @@ BEGIN {
 	count = awkpot::random(0, 50)
 	ns = awkpot::strrepeat(s, count)
 	nlen = length(ns)
-	testing::assert_equal(len*count, nlen, 1, sprintf("> strrepeat <%s> (%d) => (%d)", s, count, nlen))
+	if (count < 2)
+	    testing::assert_equal(len, nlen, 1, sprintf("> strrepeat <%s> (%d) => (%d)", s, count, nlen))
+	else
+	    testing::assert_equal(len*count, nlen, 1, sprintf("> strrepeat <%s> (%d) => (%d)", s, count, nlen))
 	ns = awkpot::strrepeat(s, count, s)
 	nlen = length(ns)
-	testing::assert_equal(len*count+len*(count-1), nlen, 1, sprintf("> strrepeat <%s> (%d) [+ sep] => (%d)", s, count, nlen))
+	if (count < 2)
+	    testing::assert_equal(len, nlen, 1, sprintf("> strrepeat <%s> (%d) => (%d)", s, count, nlen))
+	else
+	    testing::assert_equal(len*count+len*(count-1), nlen, 1, sprintf("> strrepeat <%s> (%d) [+ sep] => (%d)", s, count, nlen))
     }
 
-    
+    # TEST cmp_version
+    testing::assert_true(awkpot::cmp_version(0, PROCINFO["version"], "awkpot::eq"), 1, "> cmp_version eq")
+    testing::assert_true(awkpot::cmp_version("5.2.0", "5.2.0", "awkpot::eq"), 1, "> cmp_version eq (1)")
+    testing::assert_false(awkpot::cmp_version("5.2.0", "5.1.0", "awkpot::eq"), 1, "> cmp_version ! eq")
+    testing::assert_true(awkpot::cmp_version("5.2.0", "5.1.0", "awkpot::ne"), 1, "> cmp_version ne")
+    testing::assert_true(awkpot::cmp_version("5.1.0", "5.1.0", "awkpot::le"), 1, "> cmp_version le")
+    testing::assert_true(awkpot::cmp_version("5.1.0", "5.2.0", "awkpot::lt"), 1, "> cmp_version lt")
+    testing::assert_true(awkpot::cmp_version("5.1.0", "4.2.0", "awkpot::gt"), 1, "> cmp_version gt")
+    testing::assert_true(awkpot::cmp_version("5.1.0", "5.1.0", "awkpot::ge"), 1, "> cmp_version ge")
+    testing::assert_true(awkpot::cmp_version("5.1.0", "4.1.0", "awkpot::gt", 1), 1, "> cmp_version gt major")
+    testing::assert_true(awkpot::cmp_version("5.1.0", "4.1.0", "awkpot::eq", 0, 1), 1, "> cmp_version eq minor")
+    testing::assert_true(awkpot::cmp_version("5.1.0", "4.1.0", "awkpot::eq", 0, 0, 1), 1, "> cmp_version eq patch")
+    testing::assert_true(awkpot::cmp_version("4.2.0", "4.1.0", "awkpot::eq", 1, 0, 1), 1, "> cmp_version eq major/patch")
+    testing::assert_true(awkpot::cmp_version("5.3.1", "5.3.0", "awkpot::eq", 1, 1, 0), 1, "> cmp_version eq major/minor")
+    testing::assert_true(awkpot::cmp_version("5.3.1", "4.3.1", "awkpot::eq", 0, 1, 1), 1, "> cmp_version eq major/minor")
+
+    # TEST make_strnum
+    sn = awkpot::make_strnum(1)
+    testing::assert_equal(typeof(sn), "strnum", 1, "> strnum 1")
+    testing::assert_equal(sn, 1, 1, "> sn == 1")
+    sn = awkpot::make_strnum(0.27)
+    testing::assert_equal(typeof(sn), "strnum", 1, "> strnum 0.27")
+    testing::assert_equal(sn, 0.27, 1, "> sn == 0.27")
+    sn = awkpot::make_strnum("11")
+    testing::assert_equal(typeof(sn), "strnum", 1, "> strnum \"11\"")
+    testing::assert_equal(sn, 11, 1, "> sn == 11")
+    sn = awkpot::make_strnum(@/12/)
+    testing::assert_equal(typeof(sn), "strnum", 1, "> strnum @/12/")
+    testing::assert_equal(sn, 12, 1, "> sn == 12")
+    sn = awkpot::make_strnum("3.4")
+    testing::assert_equal(typeof(sn), "strnum", 1, "> strnum \"3.4\"")
+    testing::assert_equal(sn, 3.4, 1, "> sn == 3.4")
+    sn = awkpot::make_strnum(-2)
+    testing::assert_equal(typeof(sn), "strnum", 1, "> strnum -2")
+    testing::assert_equal(sn, -2, 1, "> sn == -2")
+    sn = awkpot::make_strnum("-2")
+    testing::assert_equal(typeof(sn), "strnum", 0, "> strnum \"-2\"")
+    testing::assert_equal(sn, -2, 1, "> sn == -2")
+    sn = awkpot::make_strnum("+27.55")
+    testing::assert_equal(typeof(sn), "strnum", 1, "> strnum \"+27.55\"")
+    testing::assert_equal(sn, 27.55, 1, "> sn == 27.55")    
+
+    # TEST make_regex
+    if (awkpot::cmp_version(awkpot::get_version(), "5.1.0", "awkpot::gt")) {
+	r = awkpot::make_regex("foo")
+	testing::assert_equal(typeof(r), "regexp", 1, sprintf("> make_regex \"foo\" => regex [%s|%s]", r, typeof(r)))
+	r = awkpot::make_regex(1)
+	testing::assert_equal(typeof(r), "regexp", 1, sprintf("> make_regex 1 => regex [%s|%s]", r, typeof(r)))
+	r = awkpot::make_regex(@/^x?y$/)
+	testing::assert_equal(typeof(r), "regexp", 1, sprintf("> make_regex @/^x?y$/ => regex [%s|%s]", r, typeof(r)))
+    } else {
+	@dprint("*** skipping _real_ tests for <make_regex>, requires a newer gawk version!")
+	r = awkpot::make_regex("foo")
+	testing::assert_equal(r, "foo", 1, sprintf("> make_regex \"foo\" =>  %s [%s]", r, typeof(r)))
+	r = awkpot::make_regex(1)
+	testing::assert_equal(r, 1, 1, sprintf("> make_regex 1 =>  %s [%s]", r, typeof(r)))
+	r = awkpot::make_regex(@/^x?y$/)
+	testing::assert_equal(r, "^x?y$", 1, sprintf("> make_regex @/^x?y$/ => %s [%s]", r, typeof(r)))
+
+    }
     # report
     testing::end_test_report()
     testing::report()
