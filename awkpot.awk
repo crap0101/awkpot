@@ -283,6 +283,11 @@ function force_type(val, type, dest) {
     # NOT SO SUPPORTED CONVERSION:
     # * regexp to (number|bool|strnum)
     # 	Always check the func retcode for consistent results.
+    # * any type to unassigned or untyped
+    #   Always check the func retcode. Depending on the running
+    #   gawk's version the new type can be one of the two,
+    #   albeit operatively they can be used interchangeably.
+    #   Versions prior 5.2 are expected to give the "unassigned" type.
     #
     # Anyway, always checks the function's return code to known if the
     # given result had any means.

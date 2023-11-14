@@ -356,6 +356,64 @@ BEGIN {
 			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
     }
 
+    # force unassigned / untyped ###XXX+TODO ....ok, check for the version
+    # no arr element
+    if (awkpot::cmp_version(awkpot::get_version(), "5.2.0", "awkpot::lt")) {
+	testing::assert_true(awkpot::force_type(awkpot::id(yyyyyyyyyyyy), "unassigned", force_arr),
+			     1, sprintf("> force_type <%s> (<%s>) to unassigned", "yyyyyyyyyyyy", awk::typeof(yyyyyyyyyyyy)))
+	testing::assert_false(awkpot::force_type(awkpot::id(yyyyyyyyyyyyz), "untyped", force_arr),
+			     1, sprintf("> ! force_type <%s> (<%s>) to untyped", "yyyyyyyyyyyyz", awk::typeof(yyyyyyyyyyyyz)))
+	testing::assert_equal(force_arr["newval_type"], "unassigned",
+			      1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+	@dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
+			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
+    } else {
+	testing::assert_true(awkpot::force_type(awkpot::id(yyyyyyyyyyyyx), "untyped", force_arr),
+			     1, sprintf("> force_type <%s> (<%s>) to untyped", "yyyyyyyyyyyyx", awk::typeof(yyyyyyyyyyyyx)))
+	testing::assert_false(awkpot::force_type(awkpot::id(yyyyyyyyyyyyxx), "unassigned", force_arr),
+			     1, sprintf("> ! force_type <%s> (<%s>) to unassigned", "yyyyyyyyyyyyxx", awk::typeof(yyyyyyyyyyyyxx)))
+	testing::assert_equal(force_arr["newval_type"], "untyped",
+			      1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+	@dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
+			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
+    }
+
+    delete __arr
+    split("2.3", __arr, ":")
+    __arr[0] = @/^foo/
+    __arr[2]=1e2
+    __arr[3]
+    __arr[4] = "foo"
+    for (i in __arr) {
+    if (awkpot::cmp_version(awkpot::get_version(), "5.2.0", "awkpot::lt")) {
+        testing::assert_true(awkpot::force_type(__arr[i], "unassigned", force_arr),
+            1, sprintf("> force_type <%s> (<%s>) to unassigned", __arr[0], awk::typeof(__arr[0])))
+        testing::assert_equal(force_arr["newval_type"], "unassigned",
+            1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+        @dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
+	    force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
+        testing::assert_false(awkpot::force_type(__arr[i], "untyped", force_arr),
+            1, sprintf("> ! force_type <%s> (<%s>) to untyped", __arr[0], awk::typeof(__arr[0])))
+        testing::assert_equal(force_arr["newval_type"], "unassigned",
+            1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+        @dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
+	    force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
+    } else {
+        testing::assert_false(awkpot::force_type(__arr[i], "unassigned", force_arr),
+            1, sprintf("> ! force_type <%s> (<%s>) to unassigned", __arr[0], awk::typeof(__arr[0])))
+        testing::assert_equal(force_arr["newval_type"], "untyped",
+            1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+        @dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
+	    force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
+        testing::assert_true(awkpot::force_type(__arr[i], "untyped", force_arr),
+            1, sprintf("> force_type <%s> (<%s>) to untyped", __arr[0], awk::typeof(__arr[0])))
+        testing::assert_equal(force_arr["newval_type"], "untyped",
+            1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+        @dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
+	    force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
+    }
+}
+
     # TEST exec_command
     # NOTE: assumings <which> is an actual system's command
     testing::assert_true(awkpot::exec_command("which which"), 1, "> exec_command [which]")
