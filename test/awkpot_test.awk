@@ -561,6 +561,9 @@ BEGIN {
     sn = awkpot::make_strnum(@/12/)
     testing::assert_equal(typeof(sn), "strnum", 1, "> strnum @/12/")
     testing::assert_equal(sn, 12, 1, "> sn == 12")
+    sn = awkpot::make_strnum(@//)
+    testing::assert_equal(typeof(sn), "strnum", 1, "> strnum @//")
+    testing::assert_equal(sn, 0, 1, "> sn == 0")
     sn = awkpot::make_strnum("3.4")
     testing::assert_equal(typeof(sn), "strnum", 1, "> strnum \"3.4\"")
     testing::assert_equal(sn, 3.4, 1, "> sn == 3.4")
@@ -579,25 +582,52 @@ BEGIN {
 
     # TEST make_regex
     if (awkpot::cmp_version(awkpot::get_version(), "5.1.0", "awkpot::gt")) {
-	r = awkpot::make_regex("foo")
-	testing::assert_equal(typeof(r), "regexp", 1, sprintf("> make_regex \"foo\" => regex [%s|%s]", r, typeof(r)))
-	r = awkpot::make_regex(1)
-	testing::assert_equal(typeof(r), "regexp", 1, sprintf("> make_regex 1 => regex [%s|%s]", r, typeof(r)))
-	r = awkpot::make_regex(@/^x?y$/)
-	testing::assert_equal(typeof(r), "regexp", 1, sprintf("> make_regex @/^x?y$/ => regex [%s|%s]", r, typeof(r)))
+	s = "foo"
+	r = awkpot::make_regex(s)
+	testing::assert_equal(typeof(r), "regexp", 1, sprintf("> make_regex [%s] => regex [%s|%s]", s, r, typeof(r)))
+	testing::assert_equal(s, r, 1, sprintf("> make_regex [%s] == [%s]", s, r))
+	s = 1
+	r = awkpot::make_regex(s)
+	testing::assert_equal(typeof(r), "regexp", 1, sprintf("> make_regex [%s] => regex [%s|%s]", s, r, typeof(r)))
+	testing::assert_equal("" s, r, 1, sprintf("> make_regex [%s] == (str) [%s]", s, r))
+	s = @/^x?y$/
+	r = awkpot::make_regex(s)
+	testing::assert_equal(typeof(r), "regexp", 1, sprintf("> make_regex [%s] => regex [%s|%s]", s, r, typeof(r)))
+	testing::assert_equal(s, r, 1, sprintf("> make_regex [%s] == [%s]", s, r))
+	s = @//
+	r = awkpot::make_regex(s)
+	testing::assert_equal(typeof(r), "regexp", 1, sprintf("> make_regex [%s] => regex [%s|%s]", s, r, typeof(r)))
+	testing::assert_equal(s, r, 1, sprintf("> make_regex [%s] == [%s]", s, r))
+	s = ""
+	r = awkpot::make_regex(s)
+	testing::assert_equal(typeof(r), "regexp", 1, sprintf("> make_regex [%s] => regex [%s|%s]", s, r, typeof(r)))
+	testing::assert_equal(s, r, 1, sprintf("> make_regex [%s] == [%s]", s, r))
     } else {
-	@dprint("*** skipping _real_ tests for <make_regex>, requires a newer gawk version!")
-	r = awkpot::make_regex("foo")
-	testing::assert_equal(r, "foo", 1, sprintf("> make_regex \"foo\" =>  %s [%s]", r, typeof(r)))
-	r = awkpot::make_regex(1)
-	testing::assert_equal(r, 1, 1, sprintf("> make_regex 1 =>  %s [%s]", r, typeof(r)))
-	r = awkpot::make_regex(@/^x?y$/)
-	testing::assert_equal(r, "^x?y$", 1, sprintf("> make_regex @/^x?y$/ => %s [%s]", r, typeof(r)))
-
+	s = "foo"
+	r = awkpot::make_regex(s)
+	testing::assert_equal(r, s, 1, sprintf("> make_regex [%s] =>  [%s|%s]", s, r, typeof(r)))
+	# in older gawk version the return's type is string, not regex
+	testing::assert_equal(typeof(r), "string", 1, sprintf("[in not recent gawk  version] typeof(%s) == string", s))
+	s = 1
+	r = awkpot::make_regex(s)
+	testing::assert_equal(r, "" s, 1, sprintf("> make_regex [%s] =>  (str) [%s|%s]", s, r, typeof(r)))
+	testing::assert_equal(typeof(r), "string", 1, sprintf("[in not recent gawk  version] typeof(%s) == string", s))
+	s = @/^x?y$/
+	r = awkpot::make_regex(s)
+	testing::assert_equal(r, s, 1, sprintf("> make_regex [%s] => [%s|%s]", s, r, typeof(r)))
+	testing::assert_equal(typeof(r), "string", 1, sprintf("[in not recent gawk  version] typeof(%s) == string", s))
+	s = @//
+	r = awkpot::make_regex(s)
+	testing::assert_equal(r, s, 1, sprintf("> make_regex [%s] => [%s|%s]", s, r, typeof(r)))
+	testing::assert_equal(typeof(r), sprintf("string", 1, "[in not recent gawk  version] typeof(%s) == string", s))
+	s = ""
+	r = awkpot::make_regex(s)
+	testing::assert_equal(r, s, 1, sprintf("> make_regex [%s] => [%s|%s]", s, r, typeof(r)))
+	testing::assert_equal(typeof(r), sprintf("string", 1, "[in not recent gawk  version] typeof(%s) == string", s))
     }
 
 
-    # XXX+TODO : doc, tests cmp, eq, ne, ...
+    # XXX+TODO : tests cmp, eq, ne, ge, gt, lt, le
     
     
     # report
