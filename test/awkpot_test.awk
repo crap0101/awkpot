@@ -193,8 +193,7 @@ BEGIN {
     # TEST force_type
     delete arr
     #print awkpot::check_defined("mkbool")
-    split("foo::2,3", str_arr, ":")
-    str_arr[22]
+    split("foo:2,3", str_arr, ":")
 
     split("1:2.3:1e2", strnum_arr, ":")
     strnum_arr[23]
@@ -207,6 +206,16 @@ BEGIN {
     reg_arr[0] = @/^foo/
     reg_arr[1] = @/1/
     @dprint("* test force_type:")
+
+    # empty string:
+    testing::assert_true(awkpot::force_type("", "number", force_arr),
+			 1, sprintf("> force_type <%s> (<%s>) to number", "", awk::typeof("")))
+    testing::assert_equal(force_arr["newval_type"], "number", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+    # unassigned:
+    _str_arr[22]
+    testing::assert_true(awkpot::force_type(_str_arr[22], "number", force_arr),
+			 1, sprintf("> force_type <%s> (<%s>) to number", _str_arr[22], awk::typeof(_str_arr[22])))
+    testing::assert_equal(force_arr["newval_type"], "number", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
 
     for (i in str_arr) {
 	testing::assert_true(awkpot::force_type(str_arr[i], "string", force_arr),
@@ -225,9 +234,9 @@ BEGIN {
 	@dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
 			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
 
-	testing::assert_true(awkpot::force_type(str_arr[i], "number", force_arr),
-			     1, sprintf("> force_type <%s> (<%s>) to number", str_arr[i], awk::typeof(str_arr[i])))
-	testing::assert_equal(force_arr["newval_type"], "number", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+	testing::assert_false(awkpot::force_type(str_arr[i], "number", force_arr),
+			     0, sprintf("> ! force_type <%s> (<%s>) to number", str_arr[i], awk::typeof(str_arr[i])))
+	testing::assert_not_equal(force_arr["newval_type"], "number", 0, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
 	@dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
 			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
 	# for gawk without mkbool, force_type will return false...
@@ -327,11 +336,11 @@ BEGIN {
 			  1, sprintf("> ! force_type <%s> (<%s>) to number", reg_arr[0], awk::typeof(reg_arr[0])))
     @dprint(sprintf("* (failed) forcing <%s> gets <%s> (type: <%s>)",
 		    force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
-    
     testing::assert_false(awkpot::force_type(reg_arr[0], "number|bool", force_arr),
 			  1, sprintf("> ! force_type <%s> (<%s>) to bool", reg_arr[0], awk::typeof(reg_arr[0])))
     @dprint(sprintf("* (failed) forcing <%s> gets <%s> (type: <%s>)",
 		    force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
+
     testing::assert_true(awkpot::force_type(reg_arr[1], "string", force_arr),
 			 1, sprintf("> force_type <%s> (<%s>) to string", reg_arr[1], awk::typeof(reg_arr[1])))
     testing::assert_equal(force_arr["newval_type"], "string", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
@@ -356,7 +365,7 @@ BEGIN {
 			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
     }
 
-    # force unassigned / untyped ###XXX+TODO ....ok, check for the version
+    # force unassigned / untyped
     # no arr element
     if (awkpot::cmp_version(awkpot::get_version(), "5.2.0", "awkpot::lt")) {
 	testing::assert_true(awkpot::force_type(awkpot::id(yyyyyyyyyyyy), "unassigned", force_arr),
@@ -564,6 +573,9 @@ BEGIN {
     sn = awkpot::make_strnum("+27.55")
     testing::assert_equal(typeof(sn), "strnum", 1, "> strnum \"+27.55\"")
     testing::assert_equal(sn, 27.55, 1, "> sn == 27.55")    
+    sn = awkpot::make_strnum("")
+    testing::assert_equal(typeof(sn), "strnum", 1, "> strnum \"\"")
+    testing::assert_equal(sn, 0, 1, "> sn == 27.55")
 
     # TEST make_regex
     if (awkpot::cmp_version(awkpot::get_version(), "5.1.0", "awkpot::gt")) {
@@ -583,6 +595,11 @@ BEGIN {
 	testing::assert_equal(r, "^x?y$", 1, sprintf("> make_regex @/^x?y$/ => %s [%s]", r, typeof(r)))
 
     }
+
+
+    # XXX+TODO : doc, tests cmp, eq, ne, ...
+    
+    
     # report
     testing::end_test_report()
     testing::report()

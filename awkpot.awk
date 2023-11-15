@@ -125,31 +125,49 @@ function cmp_version(v1, v2, cmp, major, minor, patch,    ret) {
 # COMPARISON #
 ##############
 
-# XXX+TODO : doc, tests
 function eq(a, b) {
+    # Returns true if $a equal $b, else false.
     return (a == b)
 }
 
 function ne(a, b) {
+    # Returns true if $a not equal $b, else false.
     return (a != b)
 }
 
 function gt(a, b) {
+    # Returns true if $a is greater than $b, else false.
     return (a > b)
 }
 
 function ge(a, b) {
+    # Returns true if $a is greater or equal $b, else false.
     return (a >= b)
 }
 
 function lt(a, b) {
+    # Returns true if $a is less than $b, else false.
     return (a < b)
 }
 
 function le(a, b) {
+    # Returns true if $a is less than or equal $b, else false.
     return (a <= b)
 }
 
+function cmp(a, b, f) {
+    # Bare-bones comparison function, see <compare> for a
+    # more generic comparison function.
+    # Compares $a and $b using the function $f, which
+    # must takes two arguments and returns a true value
+    # if succedes, false otherwise.
+    # If $f is not provided or evaluates to false,
+    # uses the awkpot::eq function instead.
+    # Returns the result of $f($a, $b).
+    if (! f)
+	f = "awkpot::eq"
+    return @f(a, b)
+}
 
 ##################
 # VARS AND TYPES #
@@ -158,7 +176,7 @@ function le(a, b) {
 function make_regex(val) {
     # Returns a regexp-typed
     # variable from the value $val.
-    # XXX+NOTE: works in (g)awk > 5.1.0
+    # XXX+NOTE: works in (g)awk >= 5.1.0
     # In prior versions returns a string.
     re = @//
     sub(//, val, re)
@@ -170,6 +188,8 @@ function make_strnum(val,    __a) {
     # if can be interpreted as a numeric string.
     # See https://www.gnu.org/software/gawk/manual/gawk.html#String-Type-versus-Numeric-Type
     split(val, __a, ":")
+    if (awk::typeof(__a[1]) == "unassigned" || awk::typeof(__a[1]) == "untyped")
+	return make_strnum("0")
     return __a[1]
 }
 
@@ -230,9 +250,9 @@ function check_defined(funcname, check_id) {
 
 function equals(val1, val2, type) {
     # Checks if $val1 equals $val2.
-    # Arrays comparison evaluate always to true. (use arrlib::equals
-    # to compare arrays). If $type is true,
-    # checks also if the values are of the same type.
+    # Arrays comparison (array vs array, array vs scalar)
+    # evaluate always to true. (use arrlib::equal to compare arrays).
+    # If $type is true, checks also if the values are of the same type.
     if (awk::isarray(val1)) {
 	if (awk::isarray(val2))
 	    return 1
@@ -242,7 +262,7 @@ function equals(val1, val2, type) {
 	else {
 	    if (! type) {
 		#printf "eeeeeeee: <%s> (%s) | <%s> (%s) [%s]\n", val1, awk::typeof(val1), val2, awk::typeof(val2), val1 == val2
-		return val1 == val2
+		return cmp(val1, val2)
 	    }
 	    return equals_typed(val1, val2)
 	}
@@ -254,7 +274,7 @@ function equals_typed(val1, val2) {
     # Checks if $val1 equals $val2 and are both of the same time.
     # Not meant to be used directly (use the <equals> funcs with
     # the $type parameter, instead).
-    return val1 == val2 && awk::typeof(val1) == awk::typeof(val2)
+    return cmp(val1, val2) && cmp(awk::typeof(val1), awk::typeof(val2))
 }
 
 
@@ -283,14 +303,18 @@ function force_type(val, type, dest) {
     # NOT SO SUPPORTED CONVERSION:
     # * regexp to (number|bool|strnum)
     # 	Always check the func retcode for consistent results.
-    # * any type to unassigned or untyped
-    #   Always check the func retcode. Depending on the running
+    # * any type to regexp (for gawk's version <= 5.1.0, although
+    #   the result may have some meaning, the destination type is a string).
+    #   Always check the func retcode.
+    # * A special case is forcing any type to unassigned or untyped,
+    #   which indeed makes unassigned or untyped values but...
+    #   always check the func retcode! Depending on the running
     #   gawk's version the new type can be one of the two,
     #   albeit operatively they can be used interchangeably.
     #   Versions prior 5.2 are expected to give the "unassigned" type.
     #
-    # Anyway, always checks the function's return code to known if the
-    # given result had any means.
+    # Again, always checks the function's return code to known
+    # if the given result had any means.
     delete dest
     dest["val"] = val
     dest["val_type"] = awk::typeof(val)
@@ -306,25 +330,30 @@ function force_type(val, type, dest) {
 		dest["newval"] = val
 	    break
         case "strnum":
-	    dest["newval"] = make_strnum(val)
-	    if (dest["newval"] != (make_strnum(val) + 0)) {
-		printf ("force_type: Cannot convert from <%s> to <%s> \n",
-			dest["val_type"], type) > "/dev/stderr"
-		return 0
-	    }
-	    break
-        case "number":
-	    if (dest["val_type"] == "regexp") {
-		dest["newval"] = make_strnum(val) + 0
-		if (dest["newval"] != make_strnum(val)) {
+	    if (dest["val_type"] == "unassigned" || dest["val_type"] == "untyped") {
+		dest["newval"] = make_strnum(0)
+	    } else {
+		dest["newval"] = make_strnum(val)
+		if (dest["newval"] != (make_strnum(val) + 0)) {
 		    printf ("force_type: Cannot convert from <%s> to <%s> \n",
 			    dest["val_type"], type) > "/dev/stderr"
 		    return 0
 		}
-	    } else if (dest["val_type"] == "number") {
+	    }
+	    break
+        case "number":
+	    if (dest["val_type"] == "number") {
 		dest["newval"] = val
 	    } else {
-		dest["newval"] = awk::strtonum(val)
+		# make a step to number...
+		dest["newval"] = make_strnum(val)
+		if (awk::typeof(dest["newval"]) != "strnum") {
+		    printf ("force_type: Cannot convert from <%s> to <%s> \n",
+			    dest["val_type"], type) > "/dev/stderr"
+		    return 0
+		} else {
+		    dest["newval"] = awk::strtonum(dest["newval"])
+		}
 	    }
 	    break
 	case "number|bool":
