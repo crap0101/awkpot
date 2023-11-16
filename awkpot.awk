@@ -176,7 +176,7 @@ function cmp(a, b, f) {
 function make_regex(val) {
     # Returns a regexp-typed
     # variable from the value $val.
-    # XXX+NOTE: works in (g)awk >= 5.1.0
+    # XXX+NOTE: works in (g)awk > 5.1.0
     # In prior versions returns a string.
     re = @//
     sub(//, val, re)
@@ -373,7 +373,7 @@ function force_type(val, type, dest) {
 	case "regexp": #XXX+TODO: find a workaround...
 	    # NOTE: https://www.gnu.org/software/gawk/manual/gawk.html#Strong-Regexp-Constants
 	    # regexp-typed variable creation on runtime don't works consistently on gawk 5.1
-	    # ...try to make a regex with <make_regex>, typecheck at the end.
+	    # ...try to make a regex with <make_regex>, typecheck at the end, *always* check return code.
 	    if (dest["val_type"] == "regexp") {
 		dest["newval"] = val
 	    } else {

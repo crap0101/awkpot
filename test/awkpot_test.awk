@@ -223,11 +223,11 @@ BEGIN {
 	testing::assert_equal(force_arr["newval_type"], "string", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
 	@dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
 			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
-	# Note: can be regex in gawk version >= 5.3.0, otherwise got string type
+	# XXX+NOTE_1: gives string in gawk version < 5.3.0 (try to fix with make_regex)
 	if (awkpot::cmp_version(awkpot::get_version(), "5.3.0", "awkpot::lt")) {
 	    testing::assert_false(awkpot::force_type(str_arr[i], "regexp", force_arr),
 				  1, sprintf("> ! force_type <%s> (<%s>) to regex", str_arr[i], awk::typeof(str_arr[i])))
-	    testing::assert_not_equal(force_arr["newval_type"], "regexp", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+	    testing::assert_equal(force_arr["newval_type"], "string", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
 	} else {
 	    testing::assert_true(awkpot::force_type(str_arr[i], "regexp", force_arr),
 				 1, sprintf("> ! force_type <%s> (<%s>) to regex", str_arr[i], awk::typeof(str_arr[i])))
@@ -261,11 +261,11 @@ BEGIN {
 	testing::assert_equal(force_arr["newval_type"], "string", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
 	@dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
 			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
-	# Note: can be regex in gawk version >= 5.3.0
+	# NOTE_1: gives string in gawk version < 5.3.0 (try to fix with make_regex)
 	if (awkpot::cmp_version(awkpot::get_version(), "5.3.0", "awkpot::lt")) {
 	    testing::assert_false(awkpot::force_type(strnum_arr[i], "regexp", force_arr),
 				  1, sprintf("> ! force_type <%s> (<%s>) to regexp", strnum_arr[i], awk::typeof(strnum_arr[i])))
-	    testing::assert_not_equal(force_arr["newval_type"], "regexp", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+	    testing::assert_equal(force_arr["newval_type"], "string", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
 	} else {
 	    testing::assert_true(awkpot::force_type(strnum_arr[i], "regexp", force_arr),
 				  1, sprintf("> ! force_type <%s> (<%s>) to regexp", strnum_arr[i], awk::typeof(strnum_arr[i])))
@@ -298,7 +298,7 @@ BEGIN {
 	testing::assert_equal(force_arr["newval_type"], "string", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
 	@dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
 			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
-	# Note: can be regex in gawk version >= 5.3.0
+	# NOTE_1: gives string in gawk version < 5.3.0 (try to fix with make_regex)
 	if (awkpot::cmp_version(awkpot::get_version(), "5.3.0", "awkpot::lt")) {
 	    testing::assert_false(awkpot::force_type(num_arr[i], "regexp", force_arr),
 			     1, sprintf("> ! force_type <%s> (<%s>) to regexp", num_arr[i], awk::typeof(num_arr[i])))
@@ -647,13 +647,10 @@ BEGIN {
     for (i in arr) {
 	testing::assert_true(awkpot::eq(arr[i], arr[i]), 1, sprintf("> eq (%s) (%s)", arr[i], arr[i]))
 	testing::assert_true(awkpot::cmp(arr[i], arr[i]), 1, sprintf("> cmp eq (%s) (%s)", arr[i], arr[i]))
-	#XXX+TODO: as with gawk 5.3.0 regex comparison changed... think if checking this in the awkpot functions (eq, ne, ge, le)
-	if (awkpot::cmp_version(awkpot::get_version(), "5.3.0", "awkpot::lt")) {
-	    testing::assert_false(awkpot::eq(arr[i], arr_noeq[i]), 1, sprintf("> ! eq (%s) (%s) %s", arr[i], arr_noeq[i], arr[i]== arr_noeq[i]))
-	    testing::assert_false(awkpot::cmp(arr[i], arr_noeq[i]), 1, sprintf("> ! cmp eq (%s) (%s)", arr[i], arr_neq[i]))
-	    testing::assert_false(awkpot::cmp(arr[i], arr_noeq[i]), 1, sprintf("> ! cmp eq (%s) (%s)", arr[i], arr_neq[i]))
-	    testing::assert_true(awkpot::cmp(arr[i], arr_noeq[i], "awkpot::ne"), 1, sprintf("> cmp ne (%s) (%s)", arr[i], arr_noeq[i]))
-	}
+	testing::assert_false(awkpot::eq(arr[i], arr_noeq[i]), 1, sprintf("> ! eq (%s) (%s) %s", arr[i], arr_noeq[i], arr[i]== arr_noeq[i]))
+	testing::assert_false(awkpot::cmp(arr[i], arr_noeq[i]), 1, sprintf("> ! cmp eq (%s) (%s)", arr[i], arr_neq[i]))
+	testing::assert_false(awkpot::cmp(arr[i], arr_noeq[i]), 1, sprintf("> ! cmp eq (%s) (%s)", arr[i], arr_neq[i]))
+	testing::assert_true(awkpot::cmp(arr[i], arr_noeq[i], "awkpot::ne"), 1, sprintf("> cmp ne (%s) (%s)", arr[i], arr_noeq[i]))
 	testing::assert_false(awkpot::cmp(arr[i], arr[i], "awkpot::ne"), 1, sprintf("> ! cmp ne (%s) (%s)", arr[i], arr[i]))
 	# le / ge
 	testing::assert_true(awkpot::le(arr[i], arr[i]), 1, sprintf("> le (%s) (%s)", arr[i], arr[i]))
