@@ -6,9 +6,6 @@
 
 @namespace "awkpot"
 
-@include "arrlib"
-# Cfg. "arrlib" @ https://github.com/crap0101/awk_arrlib
-
 
 ############
 # PRINTING #
