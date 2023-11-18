@@ -399,11 +399,13 @@ function force_type(val, type, dest) {
 		dest["newval"] = cmkbool(val)
 	    }
 	    break
-	case "regexp": #XXX+TODO: find a workaround... (need dynamically load modules!!!!)
+	case "regexp":
 	    # NOTE: https://www.gnu.org/software/gawk/manual/gawk.html#Strong-Regexp-Constants
-	    # regexp-typed variable creation on runtime don't works on gawk 5.1.0
-	    # ...try to make a regex with <make_regex>, typecheck at the end, *always* check return code.
-	    # See the doc of <set_make_regex> for a realiable alternative to the default <make_regex> function.
+	    # regexp-typed variable creation on runtime doens't works on gawk 5.1.0, so trying
+	    # to make a regex with <make_regex>'s default (<_make_regex), but need
+	    # to *always* check return code. See the doc of <set_make_regex> for a realiable
+	    # alternative to the default <_make_regex> function to be used with gawk version
+	    # up to 5.2.2 (the first checked version where awkpot::_make_regex works).
 	    if (dest["val_type"] == "regexp") {
 		dest["newval"] = val
 	    } else {
