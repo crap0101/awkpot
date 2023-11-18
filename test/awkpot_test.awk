@@ -454,12 +454,12 @@ BEGIN {
     testing::assert_not_equal(__r, 0, 1, "> ! check exit on error")
     
     # TEST check_load_module
-    testing::assert_true(awkpot::check_load_module("awkpot.awk"), 1, "> check_load_module [awkpot]")
-    testing::assert_true(awkpot::check_load_module("awkpot.awk", 0), 1, "> check_load_module [awkpot, is_ext=0]")
-    testing::assert_false(awkpot::check_load_module("awkpot.awk", 1), 1, "> ! check_load_module [awkpot, is_ext=1]")
-    #testing::assert_false(awkpot::check_load_module("sysutils"), 1, "> ! check_load_module [sysutils]")
-    #testing::assert_true(awkpot::check_load_module("sysutils", 1) 1, "> check_load_module [sysutils, is_ext=1]")
-    #testing::assert_false(awkpot::check_load_module("sysutils", 0), 1, "> check_load_module [sysutils, is_ext=0]")
+    # NOTE: using ARGV[0] to test with different awk versions (and different executable's name, AWKLIBPATH, etc)
+    testing::assert_true(awkpot::check_load_module("awkpot.awk", 0, ARGV[0]), 1, "> check_load_module [awkpot]")
+    testing::assert_true(awkpot::check_load_module("awkpot.awk", 0, ARGV[0]), 1, "> check_load_module [awkpot, is_ext=0]")
+    testing::assert_false(awkpot::check_load_module("awkpot.awk", 1, ARGV[0]), 1, "> ! check_load_module [awkpot, is_ext=1]")
+    testing::assert_true(awkpot::check_load_module("sysutils", 1, ARGV[0]) 1, "> check_load_module [sysutils, is_ext=1]")
+    testing::assert_false(awkpot::check_load_module("sysutils", 0, ARGV[0]), 1, "> check_load_module [sysutils, is_ext=0]")
 
     # TEST random
     testing::assert_nothing(1+awkpot::random(), 1, "> random() [assert_nothing]")
