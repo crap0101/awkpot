@@ -7,6 +7,8 @@
 
 @load "sysutils"
 # https://github.com/crap0101/awk_sysutils
+@load "regexmix"
+# https://github.com/crap0101/awk_regexmix
 
 # NOTES:
 # * Some tests uses system's commands: which, seq, awk        # :D
@@ -223,11 +225,11 @@ BEGIN {
 	testing::assert_equal(force_arr["newval_type"], "string", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
 	@dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
 			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
-	# XXX+NOTE_1: gives string in gawk version < 5.3.0 (try to fix with make_regex)
-	if (awkpot::cmp_version(awkpot::get_version(), "5.3.0", "awkpot::lt")) {
+	# NOTE_1: gives unassigned in gawk version < 5.2.2 (using the default awkpot::_make_regex function)
+	if (awkpot::cmp_version(awkpot::get_version(), "5.2.2", "awkpot::lt")) {
 	    testing::assert_false(awkpot::force_type(str_arr[i], "regexp", force_arr),
 				  1, sprintf("> ! force_type <%s> (<%s>) to regex", str_arr[i], awk::typeof(str_arr[i])))
-	    testing::assert_equal(force_arr["newval_type"], "string", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+	    testing::assert_equal(force_arr["newval_type"], "unassigned", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
 	} else {
 	    testing::assert_true(awkpot::force_type(str_arr[i], "regexp", force_arr),
 				 1, sprintf("> ! force_type <%s> (<%s>) to regex", str_arr[i], awk::typeof(str_arr[i])))
@@ -256,16 +258,11 @@ BEGIN {
     }
 
     for (i in strnum_arr) {
-	testing::assert_true(awkpot::force_type(strnum_arr[i], "string", force_arr),
-			     1, sprintf("> force_type <%s> (<%s>) to string", strnum_arr[i], awk::typeof(strnum_arr[i])))
-	testing::assert_equal(force_arr["newval_type"], "string", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
-	@dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
-			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
-	# NOTE_1: gives string in gawk version < 5.3.0 (try to fix with make_regex)
-	if (awkpot::cmp_version(awkpot::get_version(), "5.3.0", "awkpot::lt")) {
+	# NOTE_1: gives unassigned in gawk version < 5.2.2 (using the default awkpot::_make_regex function)
+	if (awkpot::cmp_version(awkpot::get_version(), "5.2.2", "awkpot::lt")) {
 	    testing::assert_false(awkpot::force_type(strnum_arr[i], "regexp", force_arr),
 				  1, sprintf("> ! force_type <%s> (<%s>) to regexp", strnum_arr[i], awk::typeof(strnum_arr[i])))
-	    testing::assert_equal(force_arr["newval_type"], "string", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+	    testing::assert_equal(force_arr["newval_type"], "unassigned", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
 	} else {
 	    testing::assert_true(awkpot::force_type(strnum_arr[i], "regexp", force_arr),
 				  1, sprintf("> ! force_type <%s> (<%s>) to regexp", strnum_arr[i], awk::typeof(strnum_arr[i])))
@@ -293,16 +290,11 @@ BEGIN {
     }
 
     for (i in num_arr) {
-	testing::assert_true(awkpot::force_type(num_arr[i], "string", force_arr),
-			     1, sprintf("> force_type <%s> (<%s>) to string", num_arr[i], awk::typeof(num_arr[i])))
-	testing::assert_equal(force_arr["newval_type"], "string", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
-	@dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
-			force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
-	# NOTE_1: gives string in gawk version < 5.3.0 (try to fix with make_regex)
-	if (awkpot::cmp_version(awkpot::get_version(), "5.3.0", "awkpot::lt")) {
+	# NOTE_1: gives unassigned in gawk version < 5.2.2 (using the default awkpot::_make_regex function)
+	if (awkpot::cmp_version(awkpot::get_version(), "5.2.2", "awkpot::lt")) {
 	    testing::assert_false(awkpot::force_type(num_arr[i], "regexp", force_arr),
 			     1, sprintf("> ! force_type <%s> (<%s>) to regexp", num_arr[i], awk::typeof(num_arr[i])))
-	    testing::assert_equal(force_arr["newval_type"], "string", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+	    testing::assert_equal(force_arr["newval_type"], "unassigned", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
 	} else {
 	    testing::assert_true(awkpot::force_type(num_arr[i], "regexp", force_arr),
 			     1, sprintf("> ! force_type <%s> (<%s>) to regexp", num_arr[i], awk::typeof(num_arr[i])))
@@ -405,34 +397,50 @@ BEGIN {
     __arr[3]
     __arr[4] = "foo"
     for (i in __arr) {
-    if (awkpot::cmp_version(awkpot::get_version(), "5.2.0", "awkpot::lt")) {
-        testing::assert_true(awkpot::force_type(__arr[i], "unassigned", force_arr),
-            1, sprintf("> force_type <%s> (<%s>) to unassigned", __arr[0], awk::typeof(__arr[0])))
-        testing::assert_equal(force_arr["newval_type"], "unassigned",
-            1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
-        @dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
-	    force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
-        testing::assert_false(awkpot::force_type(__arr[i], "untyped", force_arr),
-            1, sprintf("> ! force_type <%s> (<%s>) to untyped", __arr[0], awk::typeof(__arr[0])))
-        testing::assert_equal(force_arr["newval_type"], "unassigned",
-            1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
-        @dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
-	    force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
-    } else {
-        testing::assert_false(awkpot::force_type(__arr[i], "unassigned", force_arr),
-            1, sprintf("> ! force_type <%s> (<%s>) to unassigned", __arr[0], awk::typeof(__arr[0])))
-        testing::assert_equal(force_arr["newval_type"], "untyped",
-            1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
-        @dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
-	    force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
-        testing::assert_true(awkpot::force_type(__arr[i], "untyped", force_arr),
-            1, sprintf("> force_type <%s> (<%s>) to untyped", __arr[0], awk::typeof(__arr[0])))
-        testing::assert_equal(force_arr["newval_type"], "untyped",
-            1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
-        @dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
-	    force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
+	if (awkpot::cmp_version(awkpot::get_version(), "5.2.0", "awkpot::lt")) {
+	    testing::assert_true(awkpot::force_type(__arr[i], "unassigned", force_arr),
+				 1, sprintf("> force_type <%s> (<%s>) to unassigned", __arr[i], awk::typeof(__arr[i])))
+	    testing::assert_equal(force_arr["newval_type"], "unassigned",
+				  1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+	    @dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
+			    force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
+	    testing::assert_false(awkpot::force_type(__arr[i], "untyped", force_arr),
+				  1, sprintf("> ! force_type <%s> (<%s>) to untyped", __arr[i], awk::typeof(__arr[i])))
+	    testing::assert_equal(force_arr["newval_type"], "unassigned",
+				  1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+	    @dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
+			    force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
+	} else {
+	    testing::assert_false(awkpot::force_type(__arr[i], "unassigned", force_arr),
+				  1, sprintf("> ! force_type <%s> (<%s>) to unassigned", __arr[i], awk::typeof(__arr[i])))
+	    testing::assert_equal(force_arr["newval_type"], "untyped",
+				  1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+	    @dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
+			    force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
+	    testing::assert_true(awkpot::force_type(__arr[i], "untyped", force_arr),
+				 1, sprintf("> force_type <%s> (<%s>) to untyped <"i">", __arr[i], awk::typeof(__arr[i])))
+	    testing::assert_equal(force_arr["newval_type"], "untyped",
+				  1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+	    @dprint(sprintf("* forcing <%s> gets <%s> (type: <%s>)",
+			    force_arr["val"], force_arr["newval"], force_arr["newval_type"]))
+	}
     }
-}
+    # TEST set_make_regex
+    if (awkpot::cmp_version(awkpot::get_version(), "5.2.2", "awkpot::lt")) {
+	testing::assert_equal(awkpot::get_make_regex(), "awkpot::_make_regex", 1, "> default make_regex is awkpot::_make_regex")
+	# then check another time the returned type
+	testing::assert_false(awkpot::force_type("foo", "regexp", force_arr),
+			      1, sprintf("> ! force_type <%s> (<%s>) to regexp", "foo", awk::typeof("foo")))
+	testing::assert_equal(force_arr["newval_type"], "unassigned", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+    }
+    if (awkpot::check_load_module("regexmix", 1, ARGV[0])) {
+	# ARGV[0] is unrealiable in some versin/implementation of awk... used for tests only, seems work in gawk 5.3.0
+	awkpot::set_make_regex("regexmix::make")
+	testing::assert_equal(awkpot::get_make_regex(), "regexmix::make", 1, "> default make_regex is regexmix::make")
+        testing::assert_true(awkpot::force_type("foo", "regexp", force_arr),
+	                     1, sprintf("> ! force_type <%s> (<%s>) to regexp", "foo", awk::typeof("foo")))
+	testing::assert_equal(force_arr["newval_type"], "regexp", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
+    }
 
     # TEST exec_command
     # NOTE: assumings <which> is an actual system's command
@@ -592,7 +600,7 @@ BEGIN {
     testing::assert_equal(sn, 0, 1, "> sn == 27.55")
 
     # TEST make_regex
-    if (awkpot::cmp_version(awkpot::get_version(), "5.1.0", "awkpot::gt")) {
+    if (awkpot::cmp_version(awkpot::get_version(), "5.2.2", "awkpot::ge")) {
 	s = "foo"
 	r = awkpot::make_regex(s)
 	testing::assert_equal(typeof(r), "regexp", 1, sprintf("> make_regex [%s] => regex [%s|%s]", s, r, typeof(r)))
@@ -614,27 +622,31 @@ BEGIN {
 	testing::assert_equal(typeof(r), "regexp", 1, sprintf("> make_regex [%s] => regex [%s|%s]", s, r, typeof(r)))
 	testing::assert_equal(s, r, 1, sprintf("> make_regex [%s] == [%s]", s, r))
     } else {
+	# set to the default _make_regex() function
+	awkpot::set_make_regex("awkpot::_make_regex")
 	s = "foo"
 	r = awkpot::make_regex(s)
-	testing::assert_equal(r, s, 1, sprintf("> make_regex [%s] =>  [%s|%s]", s, r, typeof(r)))
+	testing::assert_not_equal(r, s, 1, sprintf("> make_regex [%s] =>  [%s|%s]", s, r, typeof(r)))
 	# in older gawk version the return's type is string, not regex
-	testing::assert_equal(typeof(r), "string", 1, sprintf("[in not recent gawk  version] typeof(%s) == string", s))
+	testing::assert_equal(typeof(r), "unassigned", 1, sprintf("[in not recent gawk  version] typeof(%s) == unassigned", s))
 	s = 1
 	r = awkpot::make_regex(s)
-	testing::assert_equal(r, "" s, 1, sprintf("> make_regex [%s] =>  (str) [%s|%s]", s, r, typeof(r)))
-	testing::assert_equal(typeof(r), "string", 1, sprintf("[in not recent gawk  version] typeof(%s) == string", s))
+	testing::assert_not_equal(r, "" s, 1, sprintf("> make_regex [%s] =>  (str) [%s|%s]", s, r, typeof(r)))
+	testing::assert_equal(typeof(r), "unassigned", 1, sprintf("[in not recent gawk  version] typeof(%s) == unassigned", s))
 	s = @/^x?y$/
 	r = awkpot::make_regex(s)
-	testing::assert_equal(r, s, 1, sprintf("> make_regex [%s] => [%s|%s]", s, r, typeof(r)))
-	testing::assert_equal(typeof(r), "string", 1, sprintf("[in not recent gawk  version] typeof(%s) == string", s))
+	testing::assert_not_equal(r, s, 1, sprintf("> make_regex [%s] => [%s|%s]", s, r, typeof(r)))
+	testing::assert_equal(typeof(r), "unassigned", 1, sprintf("[in not recent gawk  version] typeof(%s) == unassigned", s))
 	s = @//
 	r = awkpot::make_regex(s)
+	# empty, equals to unassigned
 	testing::assert_equal(r, s, 1, sprintf("> make_regex [%s] => [%s|%s]", s, r, typeof(r)))
-	testing::assert_equal(typeof(r), sprintf("string", 1, "[in not recent gawk  version] typeof(%s) == string", s))
+	testing::assert_equal(typeof(r), "unassigned", 1, sprintf("[in not recent gawk  version] typeof(%s) == unassigned", s))
 	s = ""
 	r = awkpot::make_regex(s)
+	# empty, equals to unassigned
 	testing::assert_equal(r, s, 1, sprintf("> make_regex [%s] => [%s|%s]", s, r, typeof(r)))
-	testing::assert_equal(typeof(r), sprintf("string", 1, "[in not recent gawk  version] typeof(%s) == string", s))
+	testing::assert_equal(typeof(r), "unassigned", 1, sprintf("[in not recent gawk  version] typeof(%s) == unassigned", s))
     }
 
 

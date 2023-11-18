@@ -174,14 +174,43 @@ function cmp(a, b, f) {
 ##################
 
 function make_regex(val) {
+    # Calls the set __make_regex func.
+    return @__make_regex(val)
+}
+
+
+function _make_regex(val) {
     # Returns a regexp-typed
     # variable from the value $val.
-    # XXX+NOTE: works in (g)awk > 5.1.0
-    # In prior versions returns a string.
+    # If fails creating the regex value, returns "unassigned".
+    # NOTE: works in gawk >= 5.2.2
+    # For older version, see the <make> function @ https://github.com/crap0101/awk_regexmix 
     re = @//
     sub(//, val, re)
+    if (awk::typeof(re) != "regexp") {
+	printf("make_regex fail: can't create regex type\n") > "/dev/stderr"
+	return
+    }
     return re 
 }
+
+
+function set_make_regex(f) {
+    # Set the provided $f function (which must takes *one* argument
+    # and returns a regex-typed value) to the one to be used
+    # instead to the default <make_regex> function, which doesn't works
+    # on gawk versions <= 5.2.2 (the sub() trick doesn't works, instead of a
+    # regexp value a string is returned).
+    # A possible $f candidate can be the <make> function @ https://github.com/crap0101/awk_regexmix
+    __make_regex = f
+}
+
+
+function get_make_regex() {
+    # Returns the current function used by <make_regex>
+    return __make_regex
+}
+
 
 function make_strnum(val,    __a) {
     # Returns a strnum-typed variable for the value $val,
@@ -261,7 +290,6 @@ function equals(val1, val2, type) {
 	    return 0
 	else {
 	    if (! type) {
-		#printf "eeeeeeee: <%s> (%s) | <%s> (%s) [%s]\n", val1, awk::typeof(val1), val2, awk::typeof(val2), val1 == val2
 		return cmp(val1, val2)
 	    }
 	    return equals_typed(val1, val2)
@@ -318,7 +346,8 @@ function force_type(val, type, dest) {
     delete dest
     dest["val"] = val
     dest["val_type"] = awk::typeof(val)
-    dest["newval"] # default to unassigned|untyped
+    # default to unassigned|untyped:
+    dest["newval"]
     dest["newval_type"]
     switch (type) {
 	case "unassigned": case "untyped":
@@ -370,10 +399,11 @@ function force_type(val, type, dest) {
 		dest["newval"] = cmkbool(val)
 	    }
 	    break
-	case "regexp": #XXX+TODO: find a workaround...
+	case "regexp": #XXX+TODO: find a workaround... (need dynamically load modules!!!!)
 	    # NOTE: https://www.gnu.org/software/gawk/manual/gawk.html#Strong-Regexp-Constants
-	    # regexp-typed variable creation on runtime don't works consistently on gawk 5.1
+	    # regexp-typed variable creation on runtime don't works on gawk 5.1.0
 	    # ...try to make a regex with <make_regex>, typecheck at the end, *always* check return code.
+	    # See the doc of <set_make_regex> for a realiable alternative to the default <make_regex> function.
 	    if (dest["val_type"] == "regexp") {
 		dest["newval"] = val
 	    } else {
@@ -400,6 +430,7 @@ function _mkbool(expression) {
 	return 1
     return 0
 }
+
 
 function cmkbool(expression) {
     # Returns true if $expression evaluate to a true value, else false.
@@ -487,18 +518,20 @@ function run_command(command, nargs, args_array, must_exit, run_values,    i, cm
 }
 
 
-function check_load_module(name, is_ext,   cmd, exe) {
+function check_load_module(name, is_ext, exe,    cmd) {
     # Checks if the awk module or the extension $name
     # is available in the system. If $name is an extension
     # to load, the (optional) $is_ext parameter must be set to true.
+    # $exe is a custom executable name to run.
     # Return true if it's, else 0.
 
-    # For some reasons ARGV[0] is unreliable
+    # For some reasons ARGV[0] is unreliable, see
     # https://www.gnu.org/software/gawk/manual/gawk.html#index-dark-corner-31
-    # so we fall back to use a plain "awk" name.
+    # so we fall back to use a plain "awk" name if not provided.
     #
     #exe = ARGV[0] ? (match(ARGV[0], "awk") ? ARGV[0] : "awk") : "awk"
-    exe = "awk"
+    if (! exe)
+	exe = "awk"
     if (is_ext)
         cmd = sprintf("%s -l %s 'BEGIN {exit(0)}'", exe, name)
     else
@@ -563,5 +596,6 @@ function random(seed, upto, init,    __rarr, __u, __i) {
 BEGIN {
     set_dprint("awkpot::dprint_fake")
     set_mkbool()
+    __make_regex = "awkpot::_make_regex"
 }
 
