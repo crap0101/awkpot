@@ -434,7 +434,7 @@ BEGIN {
 	testing::assert_equal(force_arr["newval_type"], "unassigned", 1, sprintf("> check equals: type newval_type (%s)", force_arr["newval_type"]))
     }
     if (awkpot::check_load_module("regexmix", 1, ARGV[0])) {
-	# ARGV[0] is unrealiable in some versin/implementation of awk... used for tests only, seems work in gawk 5.3.0
+	# ARGV[0] is unrealiable in some version/implementation of awk... used for tests only, seems work in gawk 5.3.0
 	awkpot::set_make_regex("regexmix::make")
 	testing::assert_equal(awkpot::get_make_regex(), "regexmix::make", 1, "> default make_regex is regexmix::make")
         testing::assert_true(awkpot::force_type("foo", "regexp", force_arr),
