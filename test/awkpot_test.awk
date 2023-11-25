@@ -366,7 +366,7 @@ BEGIN {
 
     # force unassigned / untyped
     # no arr element
-    if (awkpot::cmp_version(awkpot::get_version(), "5.2.0", "awkpot::lt")) {
+    if (awkpot::cmp_version(awkpot::get_version(), "5.2.2", "awkpot::lt")) {
 	testing::assert_true(awkpot::force_type(awkpot::id(yyyyyyyyyyyy), "unassigned", force_arr),
 			     1, sprintf("> force_type <%s> (<%s>) to unassigned", "yyyyyyyyyyyy", awk::typeof(yyyyyyyyyyyy)))
 	testing::assert_equal(force_arr["newval_type"], "unassigned",
@@ -397,7 +397,7 @@ BEGIN {
     __arr[3]
     __arr[4] = "foo"
     for (i in __arr) {
-	if (awkpot::cmp_version(awkpot::get_version(), "5.2.0", "awkpot::lt")) {
+	if (awkpot::cmp_version(awkpot::get_version(), "5.2.2", "awkpot::lt")) {
 	    testing::assert_true(awkpot::force_type(__arr[i], "unassigned", force_arr),
 				 1, sprintf("> force_type <%s> (<%s>) to unassigned", __arr[i], awk::typeof(__arr[i])))
 	    testing::assert_equal(force_arr["newval_type"], "unassigned",
@@ -659,7 +659,7 @@ BEGIN {
     for (i in arr) {
 	testing::assert_true(awkpot::eq(arr[i], arr[i]), 1, sprintf("> eq (%s) (%s)", arr[i], arr[i]))
 	testing::assert_true(awkpot::cmp(arr[i], arr[i]), 1, sprintf("> cmp eq (%s) (%s)", arr[i], arr[i]))
-	testing::assert_false(awkpot::eq(arr[i], arr_noeq[i]), 1, sprintf("> ! eq (%s) (%s) %s", arr[i], arr_noeq[i], arr[i]== arr_noeq[i]))
+	testing::assert_false(awkpot::eq(arr[i], arr_noeq[i]), 1, sprintf("> ! eq (%s) (%s) %s", arr[i], arr_noeq[i], arr[i] == arr_noeq[i]))
 	testing::assert_false(awkpot::cmp(arr[i], arr_noeq[i]), 1, sprintf("> ! cmp eq (%s) (%s)", arr[i], arr_neq[i]))
 	testing::assert_false(awkpot::cmp(arr[i], arr_noeq[i]), 1, sprintf("> ! cmp eq (%s) (%s)", arr[i], arr_neq[i]))
 	testing::assert_true(awkpot::cmp(arr[i], arr_noeq[i], "awkpot::ne"), 1, sprintf("> cmp ne (%s) (%s)", arr[i], arr_noeq[i]))
@@ -670,7 +670,7 @@ BEGIN {
 	testing::assert_true(awkpot::cmp(arr[i], arr[i], "awkpot::le"), 1, sprintf("> cmp le (%s) (%s)", arr[i], arr[i]))
 	testing::assert_true(awkpot::cmp(arr[i], arr[i], "awkpot::ge"), 1, sprintf("> cmp ge (%s) (%s)", arr[i], arr[i]))
     }
-    if (awkpot::cmp_version(awkpot::get_version(), "5.2.0", "awkpot::lt")) {
+    if (awkpot::cmp_version(awkpot::get_version(), "5.2.2", "awkpot::lt")) {
 	testing::assert_true(awkpot::eq(arr[5], thisisuntyped), 1, "> eq untyped unassigned")
 	testing::assert_true(awkpot::eq(thisisuntyped, andthistoo), 1, "> eq untyped")
 	testing::assert_false(awkpot::cmp(arr[5], thisisuntyped, "awkpot::ne"), 1, "> ! cmp ne untyped unassigned")
