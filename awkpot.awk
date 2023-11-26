@@ -299,7 +299,7 @@ function equals_typed(val1, val2) {
     # Checks if $val1 equals $val2 and are both of the same time.
     # Not meant to be used directly (use the <equals> funcs with
     # the $type parameter, instead).
-    return cmp(val1, val2) && cmp(awk::typeof(val1), awk::typeof(val2))
+    return cmp(awk::typeof(val1), awk::typeof(val2)) && cmp(val1, val2)
 }
 
 
