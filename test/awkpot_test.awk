@@ -657,7 +657,7 @@ BEGIN {
     split("2", arr_noeq, ":") # arr_noeq[1] 
     arr_noeq[0] = "str"; arr_noeq[2] = ""; arr_noeq[3] = @/baz/; arr_noeq[4] = -2; arr_noeq[5] = "d"
     for (i in arr) {
-	# there must be a bug in the version 5.2.2, where regex compares always equal
+	# NOTE: there must be a bug in the version 5.2.2, where regex compares always equal...
 	if (awkpot::cmp_version(awkpot::get_version(), "5.2.2", "awkpot::eq"))
 	    e = 0
 	else
