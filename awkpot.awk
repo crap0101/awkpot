@@ -473,21 +473,56 @@ function set_mkbool() {
 # SYS #
 #######
 
-function exec_command(command, must_exit) {
+function set_end_exit(rt) {
+    # Sets the program's exit status to $rt, which must
+    # be and integer in the range 0..128.
+    # Bad $rt values causes a warning messagge and
+    # the exit status set to 1.
+    # After that, in both cases, calls the builtin exit causing
+    # a jump to the END clause of the program (if any).
+    # See https://www.gnu.org/software/gawk/manual/html_node/Exit-Statement.html
+    # and https://www.gnu.org/software/libc/manual/html_node/Exit-Status.html
+    # NOTE: to be used to break the program flow that have an END clause
+    # Then, in the END clause, a call to <end_exit> make the program
+    # exits with status $rt.
+    if ((rt !~ /^[0-9]{1,3}$/) || (int(rt) < 0) || (int(rt) > 126)) {
+	printf("set_end_exit: invalid exit code <%s>\n", rt) >> "/dev/stderr"
+        __EXIT_REALLY = 1
+        exit(__EXIT_REALLY)
+    }
+    __EXIT_REALLY = rt
+    exit(rt)
+}
+
+
+function end_exit() {
+    # Exits with the status set from a previous call
+    # to <set_end_exit>, otherwise do nothing.
+    if (check_assigned(__EXIT_REALLY))
+     	exit(__EXIT_REALLY)
+}
+
+
+function exec_command(command, must_exit, status) { #XXX add tests for status[]
     # Executes $command using the built-in system() function.
     # Returns true if command succedes, 0 if fail.
     # If $must_exit is true, exit with the $command return code.
+    # $status is an optional one-element array in which, at index 0,
+    # the command's exit status will be saved (deleted at function call).
+    delete status
     if (! command) {
-	printf("exec_command: <%s> seems not a valid command name\n", command) > "/dev/stderr"
+	printf("exec_command: <%s> invalid command\n", command) > "/dev/stderr"
 	return 0
     }
     if (0 != (ret = system(command))) {
+	status[0] = ret
 	printf ("exec_command: Error! <%s> exit status is: %d\n", command, ret) > "/dev/stderr"
 	if (must_exit)
 	    exit(ret)
 	else
 	    return 0
     }
+    status[0] = ret
     return 1
 }
 
@@ -503,11 +538,12 @@ function run_command(command, nargs, args_array, must_exit, run_values,    i, cm
     # If any errors occours during the command executions *and* must_exit is
     # true, exits with ERRNO value, otherwise returns 0. If everything
     # gone well, returns 1.
-    # $run_values is an optional array in which some information of the
-    # executed command will be stored, the indexes are:
+    # $run_values is an optional array (deleted at function call) in which some
+    # information of the executed command will be stored, the indexes are:
     # * output => command's stdout
     # * retcode => <getline> last return code
     # * errno => the ERRNO value, if errors occours, or false.
+    delete run_values
     cmd = command " "
     out = ""
     for (i=0; i<nargs; i++)
@@ -520,7 +556,7 @@ function run_command(command, nargs, args_array, must_exit, run_values,    i, cm
     run_values["retcode"] = ret
     if (ret < 0) {
 	if (must_exit) {
-	    printf ("run_command: Error creating tempfile. ERRNO: %d\n", ERRNO) > "/dev/stderr"
+	    printf ("run_command: Error executing <%s>. ERRNO: %d\n", cmd, ERRNO) > "/dev/stderr"
 	    exit(ERRNO)
 	} else {
 	    run_values["errno"] = ERRNO

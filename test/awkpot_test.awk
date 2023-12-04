@@ -444,6 +444,7 @@ BEGIN {
 
     # TEST exec_command
     # NOTE: assumings <which> is an actual system's command
+    # NOTE: other tests for exec_command where testing set_end_exit
     testing::assert_true(awkpot::exec_command("which which"), 1, "> exec_command [which]")
     testing::assert_true(awkpot::exec_command("which which", 0), 1, "> exec_command [which, must_exit=0]")
     testing::assert_true(awkpot::exec_command("which which", 1), 1, "> exec_command [which, must_exit=1]")
@@ -715,6 +716,45 @@ BEGIN {
 	testing::assert_false(awkpot::cmp(i, j, "awkpot::ge"), 1, sprintf("> ! cmp le (%s) (%s)", i, j))
 	testing::assert_false(awkpot::cmp(i, j, "awkpot::gt"), 1, sprintf("> ! cmp lt (%s) (%s)", i, j))
     }
+
+    # TEST set_end_exit / end_exit
+
+    delete a
+    delete aret
+    e = 1
+    for (i=1;i<30; i+=7) {
+	cmd = sprintf("%s -i awkpot 'BEGIN { awkpot::set_end_exit(%d)} END { awkpot::end_exit() }'", ARGV[0], i)
+	r = awkpot::exec_command(cmd, 0, aret)
+	testing::assert_false(r, e, sprintf("> ! set_end_exit: %d", i))
+	# NOTE testing exec_command's status array too:
+	testing::assert_equal(aret[0], i, e, sprintf("> set_end_exit: exit status %d == %d", aret[0], i))
+    }
+
+    i = 0
+    cmd = sprintf("%s -i awkpot 'BEGIN { awkpot::set_end_exit(%d)} END { awkpot::end_exit() }'", ARGV[0], i)
+    r = awkpot::exec_command(cmd, 0, aret)
+    testing::assert_equal(aret[0], i, e, sprintf("> set_end_exit: exit status %d == %d", aret[0], i))
+    testing::assert_equal(r, 1, e, sprintf("> set_end_exit: %d [retcode = %d]", i, r))
+
+    i = 127
+    cmd = sprintf("%s -i awkpot 'BEGIN { awkpot::set_end_exit(%d)} END { awkpot::end_exit() }'", ARGV[0], i)
+    r = awkpot::exec_command(cmd, 0, aret)
+    testing::assert_false(r, e, sprintf("> ! set_end_exit: %d", i))
+    testing::assert_equal(aret[0], 1, e, sprintf("> set_end_exit: [%d] exit status %d == 1", i, 1, aret[0]))
+    i = 129
+    cmd = sprintf("%s -i awkpot 'BEGIN { awkpot::set_end_exit(%d)} END { awkpot::end_exit() }'", ARGV[0], i)
+    r = awkpot::exec_command(cmd, 0, aret)
+    testing::assert_false(r, e, sprintf("> set_end_exit: %d", i))
+    testing::assert_equal(aret[0], 1, e, sprintf("> ! set_end_exit: [%d] exit status %d == 1", i, aret[0]))
+    i = -1
+    cmd = sprintf("%s -i awkpot 'BEGIN { awkpot::set_end_exit(%d)} END { awkpot::end_exit() }'", ARGV[0], -1)
+    r = awkpot::exec_command(cmd, 0, aret)
+    testing::assert_false(r, e, sprintf("> ! set_end_exit: %d", i))
+    testing::assert_equal(aret[0], 1, e, sprintf("> set_end_exit: [%d] exit status %d == 1", i, aret[0]))
+
+
+
+
     
     # report
     testing::end_test_report()
