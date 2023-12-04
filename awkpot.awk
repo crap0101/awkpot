@@ -503,7 +503,7 @@ function end_exit() {
 }
 
 
-function exec_command(command, must_exit, status) { #XXX add tests for status[]
+function exec_command(command, must_exit, status) {
     # Executes $command using the built-in system() function.
     # Returns true if command succedes, 0 if fail.
     # If $must_exit is true, exit with the $command return code.
