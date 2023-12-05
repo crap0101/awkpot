@@ -562,6 +562,22 @@ BEGIN {
     testing::assert_equal(awkpot::join(a, "-", "@ind_num_desc"), "baz-bar-foo",
 			  1, "> join(a, \"-\", \"@ind_num_desc\")")
 
+    # TEST join_range
+    delete a
+    for (i=1; i<10; i++)
+	a[i] = i
+    testing::assert_equal(awkpot::join_range(a), "123456789", 1, "> join_range(a)")
+    testing::assert_equal(awkpot::join_range(a,-1,-1), "123456789", 1, "> join_range(a, -1, -1)")
+    testing::assert_equal(awkpot::join_range(a,0,0), "123456789", 1, "> join_range(a, 0, 0)")
+    testing::assert_equal(awkpot::join_range(a,1,9), "123456789", 1, "> join_range(a, 1, 9)")
+    testing::assert_equal(awkpot::join_range(a,1,1), "1", 1, "> join_range(a, 1, 1)")
+    testing::assert_equal(awkpot::join_range(a,1,2), "12", 1, "> join_range(a, 1, 2)")
+    testing::assert_equal(awkpot::join_range(a,3,5), "345", 1, "> join_range(a, 3, 5)")
+    testing::assert_equal(awkpot::join_range(a,6,9), "6789", 1, "> join_range(a, 6, 9)")
+    testing::assert_equal(awkpot::join_range(a,6,21), "6789", 1, "> join_range(a, 6, 21)")
+    testing::assert_equal(awkpot::join_range(a,6,21, "-", "@ind_num_desc"), "3-2-1",
+			  1, "> join_range(a, \"-\", 6, 21,\"@ind_num_desc\")")
+
     # TEST make_array_record (also tested in arrlib
     $1 = 1; $2 = 2; $3 = 3
     n = awkpot::make_array_record(rec_arr)

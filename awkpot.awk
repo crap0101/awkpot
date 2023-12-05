@@ -91,7 +91,7 @@ function join(arr, sep, order,    prev_sorted) {
     # Array traversal can be controlled by the $order
     # parameter, a valid PROCINFO["sorted_in"] string
     # (default to "", keep the actual sortig order).
-    # NOTE: works on flatten arrays, any subarrays are silently ignored.
+    # NOTE: works on flatten arrays only, any subarrays will cause a fatal error.
     # If you need advanced array's features see the arrlib's functions at:
     # https://github.com/crap0101/awk_arrlib
     s = ""
@@ -105,6 +105,30 @@ function join(arr, sep, order,    prev_sorted) {
 	set_sort_order(prev_sorted)
     return s
 }
+
+
+function join_range(arr, first, last, sep, order,    n, range_arr, prev_sorted) {
+    # Like awkpot::join but only for elements in the $fist..$last range
+    # (starting from 1) of the array traversal. Values < 1 for $first are
+    # treated as 1, and for $last are treated as the $arr length.
+    delete range_arr
+    if (first < 1)
+	first = 1
+    if (last < 1)
+	last = int("+inf")
+    n = 1
+    if (order)
+	prev_sorted = set_sort_order(order)
+    for (i in arr) {
+	if (n >= first && n <= last)
+	    range_arr[i] = arr[i]
+	n += 1
+    }
+    if (order)
+	set_sort_order(prev_sorted)
+    return join(range_arr, sep, order)
+}
+
 
 function strrepeat(str, count, sep) {
     # Returns $str joined $count times with itself,
@@ -126,7 +150,7 @@ function make_array_record(arr,    i) {
     # Puts the fields of the current record in $arr, deleting it first.
     # Returns the number of elements (NF).
     # NOTE: clone of the same arrlib's function,
-    # just copied here for the semplicity. Tested there.
+    # just copied here for the semplicity.
     delete arr
     for (i = 1; i <= NF; i++) {
         arr[i] = $i
