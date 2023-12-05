@@ -81,6 +81,30 @@ function get_fmt(str, conv, maxspace, position,    len, fstr, lpad, rpad) {
     }
 }
 
+###########
+# STRINGS #
+###########
+
+function join(arr, sep, order,    prev_sorted) {
+    # Returns a string with the values or the $arr array joined
+    # with the optional $sep separator (default "").
+    # Array traversal can be controlled by the $order
+    # parameter, a valid PROCINFO["sorted_in"] string
+    # (default to "", keep the actual sortig order).
+    # NOTE: works on flatten arrays, any subarrays are silently ignored.
+    # If you need advanced array's features see the arrlib's functions at:
+    # https://github.com/crap0101/awk_arrlib
+    s = ""
+    if (order)
+	prev_sorted = set_sort_order(order)
+    for (i in arr)
+	s = s arr[i] sep
+    if (sep)
+	s = substr(s, 1, length(s) - 1)
+    if (order)
+	set_sort_order(prev_sorted)
+    return s
+}
 
 function strrepeat(str, count, sep) {
     # Returns $str joined $count times with itself,
@@ -97,6 +121,18 @@ function strrepeat(str, count, sep) {
 ###############
 # GAWK INSIDE #
 ###############
+
+function make_array_record(arr,    i) {
+    # Puts the fields of the current record in $arr, deleting it first.
+    # Returns the number of elements (NF).
+    # NOTE: clone of the same arrlib's function,
+    # just copied here for the semplicity. Tested there.
+    delete arr
+    for (i = 1; i <= NF; i++) {
+        arr[i] = $i
+    }
+    return NF
+}
 
 
 function get_version() {

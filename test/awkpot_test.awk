@@ -552,6 +552,23 @@ BEGIN {
 	    testing::assert_equal(len*count+len*(count-1), nlen, 1, sprintf("> strrepeat <%s> (%d) [+ sep] => (%d)", s, count, nlen))
     }
 
+    # TEST join
+    delete a
+    a[0] = "foo"
+    a[1] = "bar"
+    a[2] = "baz"
+    testing::assert_equal(awkpot::join(a), "foobarbaz", 1, "> join(a)")
+    testing::assert_equal(awkpot::join(a, "|"), "foo|bar|baz", 1, "> join(a, \"|\")")
+    testing::assert_equal(awkpot::join(a, "-", "@ind_num_desc"), "baz-bar-foo",
+			  1, "> join(a, \"-\", \"@ind_num_desc\")")
+
+    # TEST make_array_record (also tested in arrlib
+    $1 = 1; $2 = 2; $3 = 3
+    n = awkpot::make_array_record(rec_arr)
+    testing::assert_equal(n, 3, 1, "> make_array_record [return value]")
+    for (i=1; i<=3; i++)
+	testing::assert_equal($i, rec_arr[i], 1, sprintf("> make_array_record [element at idx %d]", i))
+    
     # TEST cmp_version
     testing::assert_true(awkpot::cmp_version(0, PROCINFO["version"], "awkpot::eq"), 1, "> cmp_version eq")
     testing::assert_true(awkpot::cmp_version("5.2.0", "5.2.0", "awkpot::eq"), 1, "> cmp_version eq (1)")
