@@ -557,33 +557,55 @@ BEGIN {
     a[0] = "foo"
     a[1] = "bar"
     a[2] = "baz"
+    ps = PROCINFO["sorted_in"]
     testing::assert_equal(awkpot::join(a), "foobarbaz", 1, "> join(a)")
+    testing::assert_equal(ps, PROCINFO["sorted_in"], 1, "> join: check sort order reset(1)")
     testing::assert_equal(awkpot::join(a, "|"), "foo|bar|baz", 1, "> join(a, \"|\")")
+    ps = PROCINFO["sorted_in"]
     testing::assert_equal(awkpot::join(a, "-", "@ind_num_desc"), "baz-bar-foo",
 			  1, "> join(a, \"-\", \"@ind_num_desc\")")
+    testing::assert_equal(ps, PROCINFO["sorted_in"], 1, "> join: check sort order reset(2)")
 
     # TEST join_range
     delete a
     for (i=1; i<10; i++)
 	a[i] = i
+    ps = PROCINFO["sorted_in"]
     testing::assert_equal(awkpot::join_range(a), "123456789", 1, "> join_range(a)")
+    testing::assert_equal(ps, PROCINFO["sorted_in"], 1, "> join: check sort order reset(3)")
     testing::assert_equal(awkpot::join_range(a,-1,-1), "123456789", 1, "> join_range(a, -1, -1)")
     testing::assert_equal(awkpot::join_range(a,0,0), "123456789", 1, "> join_range(a, 0, 0)")
     testing::assert_equal(awkpot::join_range(a,1,9), "123456789", 1, "> join_range(a, 1, 9)")
     testing::assert_equal(awkpot::join_range(a,1,1), "1", 1, "> join_range(a, 1, 1)")
     testing::assert_equal(awkpot::join_range(a,1,2), "12", 1, "> join_range(a, 1, 2)")
     testing::assert_equal(awkpot::join_range(a,3,5), "345", 1, "> join_range(a, 3, 5)")
+    testing::assert_equal(awkpot::join_range(a,6,8), "678", 1, "> join_range(a, 6, 8)")
     testing::assert_equal(awkpot::join_range(a,6,9), "6789", 1, "> join_range(a, 6, 9)")
     testing::assert_equal(awkpot::join_range(a,6,21), "6789", 1, "> join_range(a, 6, 21)")
-    testing::assert_equal(awkpot::join_range(a,6,21, "-", "@ind_num_desc"), "3-2-1",
+    ps = PROCINFO["sorted_in"]
+    testing::assert_equal(awkpot::join_range(a,6,21, "-", "@ind_num_desc"), "4-3-2-1",
 			  1, "> join_range(a, \"-\", 6, 21,\"@ind_num_desc\")")
+    testing::assert_equal(ps, PROCINFO["sorted_in"], 1, "> join: check sort order reset(4)")
 
-    # TEST make_array_record (also tested in arrlib
+    # TEST make_array_record (also tested in arrlib)
     $1 = 1; $2 = 2; $3 = 3
     n = awkpot::make_array_record(rec_arr)
     testing::assert_equal(n, 3, 1, "> make_array_record [return value]")
     for (i=1; i<=3; i++)
 	testing::assert_equal($i, rec_arr[i], 1, sprintf("> make_array_record [element at idx %d]", i))
+
+    # TEST rebuild_record
+    _old_fs = FS
+    _old_ofs = OFS
+    FS = "--"
+    OFS = FS # set to the same value for simplicity
+    $4 = 4
+    testing::assert_equal(awkpot::rebuild_record(), "1--2--3--4", 1, "> rebuild_record()")
+    testing::assert_equal(awkpot::rebuild_record(-1,-1), "1--2--3--4", 1, "> rebuild_record(-1,-1)")
+    testing::assert_equal(awkpot::rebuild_record(1,2), "1--2", 1, "> rebuild_record(1,2)")
+    testing::assert_equal(awkpot::rebuild_record(2,4), "2--3--4", 1, "> rebuild_record(2,4)")
+    FS = _old_fs
+    OFS = _old_ofs
     
     # TEST cmp_version
     testing::assert_true(awkpot::cmp_version(0, PROCINFO["version"], "awkpot::eq"), 1, "> cmp_version eq")

@@ -159,6 +159,31 @@ function make_array_record(arr,    i) {
 }
 
 
+function rebuild_record(first, last,   t, arr, seps) {
+    # Rebuilds the current record, optionally from the $first field
+    # to the $last field (default to the entire record).
+    # Values < 1 for $first are treated as 1, and for $last are
+    # treated as the record's number of fields.
+    delete arr
+    delete seps
+    if (first < 1)
+	first = 1
+    if (last < 1)
+	last = NF
+    n = split($0, arr, FS, seps)
+    if (first > 1)
+	t = ""
+    else
+	t = seps[0]
+    if (last < n)
+	seps[last] = ""
+    for (i=1; i<=n; i++)
+	if ((i >= first) && (i <= last))
+	    t = t arr[i] seps[i]
+    return t
+}
+
+
 function get_version() {
     return PROCINFO["version"]
 }
