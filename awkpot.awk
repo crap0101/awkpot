@@ -159,11 +159,12 @@ function make_array_record(arr,    i) {
 }
 
 
-function rebuild_record(first, last,   t, arr, seps) {
+function get_record_string(first, last,   t, arr, seps) {
     # Rebuilds the current record, optionally from the $first field
     # to the $last field (default to the entire record).
     # Values < 1 for $first are treated as 1, and for $last are
     # treated as the record's number of fields.
+    # Returns the resulting string.
     delete arr
     delete seps
     if (first < 1)

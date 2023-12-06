@@ -594,16 +594,16 @@ BEGIN {
     for (i=1; i<=3; i++)
 	testing::assert_equal($i, rec_arr[i], 1, sprintf("> make_array_record [element at idx %d]", i))
 
-    # TEST rebuild_record
+    # TEST get_record_string
     _old_fs = FS
     _old_ofs = OFS
     FS = "--"
     OFS = FS # set to the same value for simplicity
     $4 = 4
-    testing::assert_equal(awkpot::rebuild_record(), "1--2--3--4", 1, "> rebuild_record()")
-    testing::assert_equal(awkpot::rebuild_record(-1,-1), "1--2--3--4", 1, "> rebuild_record(-1,-1)")
-    testing::assert_equal(awkpot::rebuild_record(1,2), "1--2", 1, "> rebuild_record(1,2)")
-    testing::assert_equal(awkpot::rebuild_record(2,4), "2--3--4", 1, "> rebuild_record(2,4)")
+    testing::assert_equal(awkpot::get_record_string(), "1--2--3--4", 1, "> rebuild_record()")
+    testing::assert_equal(awkpot::get_record_string(-1,-1), "1--2--3--4", 1, "> rebuild_record(-1,-1)")
+    testing::assert_equal(awkpot::get_record_string(1,2), "1--2", 1, "> rebuild_record(1,2)")
+    testing::assert_equal(awkpot::get_record_string(2,4), "2--3--4", 1, "> rebuild_record(2,4)")
     FS = _old_fs
     OFS = _old_ofs
     
