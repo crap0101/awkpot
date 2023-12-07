@@ -523,6 +523,18 @@ BEGIN {
     str = sprintf(fmt, s)
     testing::assert_equal(length(str), length(s), 1, "> get_fmt string overload")
 
+    # TEST make_escape
+    delete escapearr
+    escapearr["\\0"]="\0";escapearr["\\n"]="\n";escapearr["\\a"]="\a";escapearr["\\b"]="\b"
+    escapearr["\\f"]="\f";escapearr["\\r"]="\r";escapearr["\\t"]="\t";escapearr["\\v"]="\v"
+    for (i in escapearr)
+	testing::assert_equal(escapearr[i], awkpot::make_escape(i), 1, sprintf("> make_escape(%s)", i))
+    delete escapearr
+    escapearr["\0"];escapearr["foo"];escapearr["\o066"];escapearr["\xBAD"]
+    escapearr["\x53"];escapearr["n"];escapearr["\\"];escapearr["\x[ab].*$"]
+    for (i in escapearr)
+	testing::assert_equal(i, awkpot::make_escape(i), 1, sprintf("> ! make_escape(%s)", i))
+
     # TEST strrepeat
     s = "spam"
     sep = ":"

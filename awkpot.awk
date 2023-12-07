@@ -130,6 +130,34 @@ function join_range(arr, first, last, sep, order,    n, range_arr, prev_sorted) 
 }
 
 
+function make_escape(s) {
+    # Returns a printable form of the $s escape sequence string.
+    # NOT all escaped sequences are covered as far, only
+    # the most userful (we hope).
+    # Proper $s values are:
+    # "\0", "\n", "\a", "\b", "\f", "\r", "\t", "\v".
+    # If $s is not one of them, $s itself will be returned.
+    # NOTE (rational): the need of this function arise from the behaviour
+    # within argument passing of those escape sequences to (g)awk programs
+    # using, for example, the builtin getopt module, i.e. NOT using
+    # the -v var=XXX switch NOR having this strings harcoded in the
+    # programs text AND want to use them in the non literal form.
+    if (! (s ~ /^\\[0abfnrtv]$/))
+	return s
+    switch (substr(s,2)) {
+	case "0":return sprintf("%c", 0)
+	case "a":return sprintf("%c", 7)
+	case "b":return sprintf("%c", 8)
+	case "f":return sprintf("%c", 12)
+	case "n":return sprintf("%c", 10)
+	case "r":return sprintf("%c", 13)
+	case "t":return sprintf("%c", 9)
+	case "v":return sprintf("%c", 11)
+        default: return s
+    }
+}
+
+
 function strrepeat(str, count, sep) {
     # Returns $str joined $count times with itself,
     # optionally separated by $sep.
@@ -337,7 +365,7 @@ function len(x) {
 function check_assigned(name) {
     # Returns true if $name already got a value,
     # false if untyped or unassigned.
-    if (awk::typeof(name) == "untyped" || awk::typeof(name) == "unassigned")
+    if (awk::typeof(name) == "untyped" || awk::typeof(name) == "unassigned" "unassigned")
 	return 0
     return 1
 }
