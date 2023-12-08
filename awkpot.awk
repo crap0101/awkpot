@@ -365,7 +365,7 @@ function len(x) {
 function check_assigned(name) {
     # Returns true if $name already got a value,
     # false if untyped or unassigned.
-    if (awk::typeof(name) == "untyped" || awk::typeof(name) == "unassigned" "unassigned")
+    if (awk::typeof(name) == "untyped" || awk::typeof(name) == "unassigned")
 	return 0
     return 1
 }

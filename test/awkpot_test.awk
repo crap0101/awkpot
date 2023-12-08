@@ -150,6 +150,36 @@ BEGIN {
     testing::assert_false(awkpot::check_assigned(yyyyyyyyyyyyyyyyyyyyy), 1, "> ! check_assigned (again)")
     yyyyyyyyyyyyyyyyyyyyy = 0
     testing::assert_true(awkpot::check_assigned(yyyyyyyyyyyyyyyyyyyyy), 1, "> check_assigned")
+    delete carr
+    carr[0]
+    carr[1] = zzzzzzzzzzzzzzzzzzzzzzzz
+    for (i in carr)
+	testing::assert_false(awkpot::check_assigned(carr[i]), 1, sprintf("> ! check_assigned (array[%d])", i))
+    for (i in carr)
+	carr[i] = i
+    for (i in carr)
+	testing::assert_true(awkpot::check_assigned(carr[i]), 1, sprintf("> check_assigned (array[%d])", i))
+    delete bf
+    split("1", bf, ":")
+    bf[0] = -1
+    bf[2] = "foo" 
+    bf[3] = ""
+    bf[4] = @/re/ 
+    bf[5] = 11.2
+    bf[6][7]
+    bf[7] = 2e9
+    for (i in bf) 
+	testing::assert_true(awkpot::check_assigned(bf[i]),
+			      1, sprintf("> ! check_assigned bf[%s]", i))
+    bf[8]
+    testing::assert_false(awkpot::check_assigned(bf[8]),
+			  1, "> check_assigned bf[8]")
+    testing::assert_false(awkpot::check_assigned(unassigned_or_untyped_scalar),
+			  1, "> check_assigned unassigned_or_untyped_scalar")
+    testing::assert_false(awkpot::check_assigned(also_and_array_one[8]),
+			  1, "> check_assigned also_and_array_one[8]")
+    delete bf
+    delete carr
     
     # TEST check_defined
     @dprint("* test check_defined:")
