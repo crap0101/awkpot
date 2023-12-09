@@ -565,6 +565,11 @@ BEGIN {
     for (i in escapearr)
 	testing::assert_equal(i, awkpot::make_escape(i), 1, sprintf("> ! make_escape(%s)", i))
 
+    # TEST escape
+    testing::assert_equal(awkpot::escape("\"foo\""), "\\\"foo\\\"", 1, "> escape [1]")
+    testing::assert_equal(awkpot::escape("aaa\\taaa"), "aaa\\\\taaa", 1, "> escape [2]")
+    testing::assert_equal(awkpot::escape("this is \\xBAD"), "this is \\\\xBAD", 1, "> escape [3]")
+
     # TEST strrepeat
     s = "spam"
     sep = ":"
