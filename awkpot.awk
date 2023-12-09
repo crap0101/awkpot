@@ -76,7 +76,7 @@ function get_fmt(str, conv, maxspace, position,    len, fstr, lpad, rpad) {
 	    rpad = sprintf("%*s", maxspace - len - length(lpad), "")
 	    return sprintf("%s%%%s%s", lpad, conv, rpad)
 	default:
-	    printf("ERROR: get_fmt: unknown value <%s> for $position", position) > "/dev/stderr"
+	    printf("ERROR: get_fmt: unknown value <%s> for $position", position) >> "/dev/stderr"
 	    exit(1)
     }
 }
@@ -315,7 +315,7 @@ function _make_regex(val) {
     re = @//
     sub(//, val, re)
     if (awk::typeof(re) != "regexp") {
-	printf("make_regex fail: can't create regex type\n") > "/dev/stderr"
+	printf("make_regex fail: can't create regex type\n") >> "/dev/stderr"
 	return
     }
     return re 
@@ -391,7 +391,7 @@ function check_defined(funcname, check_id) {
 		    return 1
 		} else {
 		    printf("check_defined: Unknown value for <%s>: %s\n",
-			   funcname, PROCINFO["identifiers"][funcname]) > "/dev/stderr"
+			   funcname, PROCINFO["identifiers"][funcname]) >> "/dev/stderr"
 		    return 0
 		}
 	    } else {
@@ -492,7 +492,7 @@ function force_type(val, type, dest) {
 		dest["newval"] = make_strnum(val)
 		if (dest["newval"] != (make_strnum(val) + 0)) {
 		    printf ("force_type: Cannot convert from <%s> to <%s> \n",
-			    dest["val_type"], type) > "/dev/stderr"
+			    dest["val_type"], type) >> "/dev/stderr"
 		    return 0
 		}
 	    }
@@ -505,7 +505,7 @@ function force_type(val, type, dest) {
 		dest["newval"] = make_strnum(val)
 		if (awk::typeof(dest["newval"]) != "strnum") {
 		    printf ("force_type: Cannot convert from <%s> to <%s> \n",
-			    dest["val_type"], type) > "/dev/stderr"
+			    dest["val_type"], type) >> "/dev/stderr"
 		    return 0
 		} else {
 		    dest["newval"] = awk::strtonum(dest["newval"])
@@ -517,7 +517,7 @@ function force_type(val, type, dest) {
 		dest["newval"] = cmkbool(make_strnum(val) + 0)
 		if (dest["newval"] != cmkbool(make_strnum(val))) {
 		    printf ("force_type: Cannot convert from <%s> to <%s> \n",
-			    dest["val_type"], type) > "/dev/stderr"
+			    dest["val_type"], type) >> "/dev/stderr"
 		    return 0
 		}
 	    } else if (dest["val_type"] == "number|bool") {
@@ -540,7 +540,7 @@ function force_type(val, type, dest) {
 	    }
 	    break
         default:
-	    printf ("force_type: Unknown conversion type <%s>\n", type) > "/dev/stderr"
+	    printf ("force_type: Unknown conversion type <%s>\n", type) >> "/dev/stderr"
 	    return 0
     }
     dest["newval_type"] = awk::typeof(dest["newval"])
@@ -646,12 +646,13 @@ function exec_command(command, must_exit, status) {
     # the command's exit status will be saved (deleted at function call).
     delete status
     if (! command) {
-	printf("exec_command: <%s> invalid command\n", command) > "/dev/stderr"
+	printf("exec_command: <%s> invalid command\n", command) >> "/dev/stderr"
 	return 0
     }
     if (0 != (ret = system(command))) {
 	status[0] = ret
-	printf ("exec_command: Error! <%s> exit status is: %d\n", command, ret) > "/dev/stderr"
+	printf ("exec_command: Error! <%s> exit status is: %d\n",
+		command, ret) >> "/dev/stderr"
 	if (must_exit)
 	    exit(ret)
 	else
@@ -691,10 +692,11 @@ function run_command(command, nargs, args_array, must_exit, run_values,    i, cm
     run_values["retcode"] = ret
     if (ret < 0) {
 	if (must_exit) {
-	    printf ("run_command: Error executing <%s>. ERRNO: %d\n", cmd, ERRNO) > "/dev/stderr"
-	    exit(ERRNO)
+	    printf ("run_command: Error executing <%s>. ERRNO: %d\n",
+		    cmd, PROCINFO["errno"]) >> "/dev/stderr"
+	    exit(PROCINFO["errno"])
 	} else {
-	    run_values["errno"] = ERRNO
+	    run_values["errno"] = PROCINFO["errno"]
 	    return 0
 	}
     }
@@ -735,7 +737,8 @@ function read_file_arr(filename, dest, start_index,   line, ret, idx) {
     while ((ret = (getline line < filename)) > 0)
 	dest[idx++] = line
     if (ret < 0)
-	printf ("read_file_arr: Error reading <%s>. ERRNO: %d\n", filename, ERRNO) > "/dev/stderr"
+	printf ("read_file_arr: Error reading <%s>. ERRNO: %d\n",
+		filename, PROCINFO["errno"]) >> "/dev/stderr"
     close(filename)
 }
 
