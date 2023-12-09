@@ -849,7 +849,11 @@ BEGIN {
     testing::assert_false(r, e, sprintf("> ! set_end_exit: %d", i))
     testing::assert_equal(aret[0], 1, e, sprintf("> set_end_exit: [%d] exit status %d == 1", i, aret[0]))
 
-
+    # TEST getline_or_die
+    t = sys::mktemp("/tmp")
+    cmd = sprintf("echo -e \"1\\n2\" | awk -i awkpot.awk 'BEGIN {r=awkpot::getline_or_die(\"f1\", 1, a);"\
+		  "s=awkpot::getline_or_die(\"f2\",1,b);}; exit (r && s && (a[0]==1) && (a[1]==0))' 2>%s", t)
+    sys::rm(t)
 
 
     

@@ -140,8 +140,9 @@ function make_escape(s) {
     # NOTE (rational): the need of this function arise from the behaviour
     # within argument passing of those escape sequences to (g)awk programs
     # using, for example, the builtin getopt module, i.e. NOT using
-    # the -v var=XXX switch NOR having this strings harcoded in the
-    # programs text AND want to use them in the non literal form.
+    # the -v var=YYY switch NOR having this strings harcoded in the
+    # programs text AND want to use them in the non literal form,
+    # for example when setting ORS of OFS.
     if (! (s ~ /^\\[0abfnrtv]$/))
 	return s
     switch (substr(s,2)) {
@@ -586,6 +587,26 @@ function set_mkbool() {
 #######
 # SYS #
 #######
+
+function getline_or_die(filename, must_exit, arr,    r) {
+    # Calls `getline' without arguments ($filename is used only
+    # for the output in case of errors) and, if $must_exit is true,
+    # exits using the set_end_exit() function if errors, otherwise
+    # returns false. If the getline call succedes, returns true.
+    # $arr is an array in which the getline's return code will be
+    # saved ($arr is deleted first).
+    delete arr
+    r = (getline)
+    arr[0] = r
+    if (r < 0) {
+	printf("Error reading <%s>\n", filename) >> "/dev/stderr"
+	if (must_exit)
+	    set_end_exit(1)
+	else
+	    return 0
+    }
+    return 1
+}
 
 function set_end_exit(rt) {
     # Sets the program's exit status to $rt, which must
