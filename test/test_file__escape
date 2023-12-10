@@ -1,0 +1,4 @@
+this is a "test" file
+for \t \n \0 and \xBAD
+escaped sequences, octal \too: \664
+do \uAA need "more"?

@@ -158,6 +158,7 @@ function make_escape(s) {
     }
 }
 
+
 function escape(s){
     # Escapes some tokens of the string $s.
     # Designed for formatting program's help() strings
@@ -169,10 +170,22 @@ function escape(s){
     return s
 }
 
+
+function startswith(str, start) {
+    # Returns true if $str starts with $start, else false.
+    if (str && ! start)
+	return 0
+    return substr(str, 1, length(start)) == start
+}
+
+
 function endswith(str, end) {
     # Returns true if $str ends in $end, else false.
+    if (str && ! end)
+	return 0
     return substr(str, length(str) - length(end) + 1, length(str)) == end
 }
+
 
 function strrepeat(str, count, sep) {
     # Returns $str joined $count times with itself,
@@ -185,6 +198,7 @@ function strrepeat(str, count, sep) {
 	new_str = new_str sep str
     return new_str
 }
+
 
 ###############
 # GAWK INSIDE #

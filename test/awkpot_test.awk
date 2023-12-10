@@ -622,10 +622,14 @@ BEGIN {
     # TEST endswith
     delete strarr
     delete strarr2
+    strarr[""] = ""
     strarr["foo"] = "o"
     strarr["foo"] = "oo"
     strarr["foo"] = "foo"
-    # not endswit
+    # not endswith
+    strarr2[""] = "o"
+    strarr2["foo"] = ""
+    strarr2["foo"] = "fooo"
     strarr2["foo"] = "a"
     strarr2["foo"] = "fo"
     strarr2["foo"] = "f"
@@ -635,7 +639,29 @@ BEGIN {
     for (i in strarr)
         testing::assert_true(awkpot::endswith(i, strarr[i]), 1, sprintf("> endswith <%s> <%s>", i, strarr[i]))
     for (i in strarr2)
-        testing::assert_false(awkpot::endswith(i, strarr2[i]), 1, sprintf("> endswith <%s> <%s>", i, strarr2[i]))
+        testing::assert_false(awkpot::endswith(i, strarr2[i]), 1, sprintf("> ! endswith <%s> <%s>", i, strarr2[i]))
+
+    # TEST startswith
+    delete strarr
+    delete strarr2
+    strarr[""] = ""
+    strarr["foo"] = "f"
+    strarr["foo"] = "fo"
+    strarr["foo"] = "foo"
+    # not endswith
+    strarr2[""] = "o"
+    strarr2["foo"] = ""
+    strarr2["foo"] = "oo"
+    strarr2["foo"] = "a"
+    strarr2["foo"] = " fo"
+    strarr2["foo"] = "f "
+    strarr2["foo"] = "oof"
+    strarr2["foo"] = "fooo"
+    strarr2["foo"] = "oo"
+    for (i in strarr)
+        testing::assert_true(awkpot::startswith(i, strarr[i]), 1, sprintf("> startswith <%s> <%s>", i, strarr[i]))
+    for (i in strarr2)
+        testing::assert_false(awkpot::startswith(i, strarr2[i]), 1, sprintf("> ! startswith <%s> <%s>", i, strarr2[i]))
 
     # TEST strrepeat
     s = "spam"
