@@ -569,6 +569,73 @@ BEGIN {
     testing::assert_equal(awkpot::escape("\"foo\""), "\\\"foo\\\"", 1, "> escape [1]")
     testing::assert_equal(awkpot::escape("aaa\\taaa"), "aaa\\\\taaa", 1, "> escape [2]")
     testing::assert_equal(awkpot::escape("this is \\xBAD"), "this is \\\\xBAD", 1, "> escape [3]")
+    # if the path of the test directory is set, do another test:
+    if (AWKPOT_TESTDIR) {
+	psep = sys::get_pathsep()
+	if (awkpot::endswith(AWKPOT_TESTDIR, psep))
+	    testfile = AWKPOT_TESTDIR "test_file__escape"
+	else 
+	    testfile = AWKPOT_TESTDIR psep "test_file__escape"
+	# write a temp file with the escaped source, making a runnable awk program
+	outfile = sys::mktemp("/tmp")
+	printf("BEGIN {printf(") >> outfile
+	# look ma, no hands!
+	while (0 < (r = (getline line < testfile)))
+	    printf("%s%s", sprintf("\"%s\" \"\\n\"\\", awkpot::escape(line)), RS) >> outfile
+	if (r < 0) {
+	    printf("Error reading <%s>\n", testfile) >> "/dev/stderr"
+	    sys::rm(outfile)
+	    exit(1)
+	}
+	printf(")}") >> outfile
+        checkfile = sys::mktemp("/tmp")
+	# now, execute the program to recreate the original file (...uh!)
+        awkpot::exec_command(sprintf("%s -f %s > %s", ARGV[0], outfile, checkfile))
+	# and now test if compares equal, with diff:
+	#testing::assert_true(! system(sprintf("diff %s %s", testfile, checkfile)), 1, "> escape: diff")
+	# ...or, a bit longer :D
+	success = 1
+	while (0 < (r1 = (getline line1 < testfile))) {
+	    if (0 > (r2 = (getline line2 < checkfile))) {
+		printf("Error reading <%s>\n", checkfile) >> "/dev/stderr"
+		sys::rm(outfile)
+		sys::rm(checkfile)
+		exit(8)
+	    }
+	    if (r1 != r2 || line1 != line2) {
+		printf("lines mismatch:\n%s\n%s\n", line1, line2) >> "/dev/stderr"
+		success = 0
+		break
+	    }
+	}
+	if (r1 < 0) {
+	    printf("Error reading <%s>\n", checkfile) >> "/dev/stderr"
+	    sys::rm(outfile)
+	    sys::rm(checkfile)
+	    exit(9)
+	}
+	testing::assert_true(success, 1, "> escape: diff (without diff)")
+	sys::rm(outfile)
+	sys::rm(checkfile)
+    }
+
+    # TEST endswith
+    delete strarr
+    delete strarr2
+    strarr["foo"] = "o"
+    strarr["foo"] = "oo"
+    strarr["foo"] = "foo"
+    # not endswit
+    strarr2["foo"] = "a"
+    strarr2["foo"] = "fo"
+    strarr2["foo"] = "f"
+    strarr2["foo"] = "oof"
+    strarr2["foo"] = "fooo"
+    strarr2["foo"] = "ooo"
+    for (i in strarr)
+        testing::assert_true(awkpot::endswith(i, strarr[i]), 1, sprintf("> endswith <%s> <%s>", i, strarr[i]))
+    for (i in strarr2)
+        testing::assert_false(awkpot::endswith(i, strarr2[i]), 1, sprintf("> endswith <%s> <%s>", i, strarr2[i]))
 
     # TEST strrepeat
     s = "spam"
@@ -867,5 +934,11 @@ BEGIN {
     testing::report()
 
     # run:
+    # ~$ awk -f awkpot_test.awk
+    # To see some (a lot, actually) of debugging messagges:
     # ~$ awk -v AWKPOT_DEBUG=1 -f awkpot_test.awk
+    # To run also certain tests, set the path of the test directory... which is
+    # the awkpot's "test" directory. The path should be absolute, or relative from
+    # the current working directory.
+    # ~$ awk -v AWKPOT_DEBUG=1 -v AWKPOT_TESTDIR=path -f awkpot_test.awk
 }

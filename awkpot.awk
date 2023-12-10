@@ -169,6 +169,11 @@ function escape(s){
     return s
 }
 
+function endswith(str, end) {
+    # Returns true if $str ends in $end, else false.
+    return substr(str, length(str) - length(end) + 1, length(str)) == end
+}
+
 function strrepeat(str, count, sep) {
     # Returns $str joined $count times with itself,
     # optionally separated by $sep.
