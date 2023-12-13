@@ -344,7 +344,7 @@ function _make_regex(val) {
     re = @//
     sub(//, val, re)
     if (awk::typeof(re) != "regexp") {
-	printf("make_regex fail: can't create regex type\n") >> "/dev/stderr"
+	printf("make_regex fail [%s]: can't create regex type\n", val) >> "/dev/stderr"
 	return
     }
     return re 
@@ -373,7 +373,7 @@ function make_strnum(val,    __a) {
     # if can be interpreted as a numeric string.
     # See https://www.gnu.org/software/gawk/manual/gawk.html#String-Type-versus-Numeric-Type
     split(val, __a, ":")
-    if (awk::typeof(__a[1]) == "unassigned" || awk::typeof(__a[1]) == "untyped")
+    if (! check_assigned(__a[1]))
 	return make_strnum("0")
     return __a[1]
 }
@@ -515,7 +515,7 @@ function force_type(val, type, dest) {
 		dest["newval"] = val
 	    break
         case "strnum":
-	    if (dest["val_type"] == "unassigned" || dest["val_type"] == "untyped") {
+	    if (! check_assigned(dest["val_type"])) {
 		dest["newval"] = make_strnum(0)
 	    } else {
 		dest["newval"] = make_strnum(val)

@@ -86,8 +86,6 @@ BEGIN {
     delete arread
     sys::rm(t)
 
-    sys::rm(t)
-    
     # TEST set_sort_order
     @dprint("* test sort_order:")
     ord[0] = PROCINFO["sorted_in"]
@@ -560,8 +558,14 @@ BEGIN {
     for (i in escapearr)
 	testing::assert_equal(escapearr[i], awkpot::make_escape(i), 1, sprintf("> make_escape(%s)", i))
     delete escapearr
-    escapearr["\0"];escapearr["foo"];escapearr["\o066"];escapearr["\xBAD"]
-    escapearr["\x53"];escapearr["n"];escapearr["\\"];escapearr["\x[ab].*$"]
+    escapearr["\0"]
+    escapearr["foo"]
+    escapearr["\\o066"]
+    escapearr["\xBAD"]
+    escapearr["\x53"]
+    escapearr["n"]
+    escapearr["\\"]
+    escapearr["\\x[ab].*$"]
     for (i in escapearr)
 	testing::assert_equal(i, awkpot::make_escape(i), 1, sprintf("> ! make_escape(%s)", i))
 
@@ -616,7 +620,9 @@ BEGIN {
 	}
 	testing::assert_true(success, 1, "> escape: diff (without diff)")
 	sys::rm(outfile)
+	print "outfile:" outfile  >> "/dev/stderr"
 	sys::rm(checkfile)
+	print "checkfile:" checkfile  >> "/dev/stderr"
     }
 
     # TEST endswith
@@ -853,7 +859,7 @@ BEGIN {
     split("2", arr_noeq, ":") # arr_noeq[1] 
     arr_noeq[0] = "str"; arr_noeq[2] = ""; arr_noeq[3] = @/baz/; arr_noeq[4] = -2; arr_noeq[5] = "d"
     for (i in arr) {
-	# NOTE: there must be a bug in the version 5.2.2, where regex compares always equal...
+	# NOTE: bug in the version 5.2.2, where regex compares always equal...
 	if (awkpot::cmp_version(awkpot::get_version(), "5.2.2", "awkpot::eq"))
 	    e = 0
 	else
