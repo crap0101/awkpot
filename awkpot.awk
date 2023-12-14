@@ -163,7 +163,8 @@ function escape(s){
     # Escapes some tokens of the string $s.
     # Designed for formatting program's help() strings
     # readed from a plain text file.
-    gsub(/\\[nbtvrfa0]|\\[0-9]{3}|\\[x][0-9a-fA-F]{1,2}|\\[u][0-9a-fA-F]{1,8}/,
+    gsub(/\\/,
+    #gsub(/\\[nbtvrfa0]|\\[0-9]{3}|\\[x][0-9a-fA-F]{1,2}|\\[u][0-9a-fA-F]{1,8}/,
 	 "\\\\&",
 	 s)
     gsub(/"/, "\\\"", s)
