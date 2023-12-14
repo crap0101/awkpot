@@ -437,26 +437,18 @@ function check_defined(funcname, check_id) {
 function equals(val1, val2, type) {
     # Checks if $val1 equals $val2.
     # Arrays comparison (array vs array, array vs scalar)
-    # evaluate always to true. (use arrlib::equal to compare arrays).
+    # evaluate always to false. (use arrlib::equal to compare arrays).
     # If $type is true, checks also if the values are of the same type.
-    if (awk::isarray(val1)) {
-	if (awk::isarray(val2))
-	    return 1
-    } else {
-	if (awk::isarray(val2))
-	    return 0
-	else {
-	    if (! type) {
-		return cmp(val1, val2)
-	    }
-	    return equals_typed(val1, val2)
-	}
-    }
+    if (awk::isarray(val1) || awk::isarray(val2))
+	return 0
+    if (! type)
+	return cmp(val1, val2)
+    return equals_typed(val1, val2)
 }
 
 
 function equals_typed(val1, val2) {
-    # Checks if $val1 equals $val2 and are both of the same time.
+    # Checks if $val1 equals $val2 and are both of the same type.
     # Not meant to be used directly (use the <equals> funcs with
     # the $type parameter, instead).
     return cmp(awk::typeof(val1), awk::typeof(val2)) && cmp(val1, val2)
@@ -471,8 +463,8 @@ function force_type(val, type, dest) {
     # * "val" is the value passed to the function
     # * "val_type" is the $val type as per typeof()
     # * "newval" is the value after the tentative type coercion
-    # * "newval_type" is the (probably new) "newval"'s type,
-    #   as per the $type argument.
+    # * "newval_type" is the "newval"'s type, as per the $type argument.
+    #
     # Returns 1 if the conversion succeeded or 0 if errors.
     #
     # SUPPORTED $val types:
@@ -624,7 +616,7 @@ function getline_or_die(filename, must_exit, arr,    r) {
     # exits using the set_end_exit() function if errors, otherwise
     # returns false. If the getline call succedes, returns true.
     # $arr is an array in which the getline's return code will be
-    # saved ($arr is deleted first).
+    # saved (at index 0, also note $arr is deleted at function call).
     delete arr
     r = (getline)
     arr[0] = r
@@ -639,10 +631,9 @@ function getline_or_die(filename, must_exit, arr,    r) {
 }
 
 function set_end_exit(rt) {
-    # Sets the program's exit status to $rt, which must
-    # be and integer in the range 0..128.
-    # Bad $rt values causes a warning messagge and
-    # the exit status set to 1.
+    # Sets the program's exit status to $rt, which must be
+    # an integer in the range 0..128.
+    # Bad $rt values causes a warning messagge and the exit status set to 1.
     # After that, in both cases, calls the builtin exit causing
     # a jump to the END clause of the program (if any).
     # See https://www.gnu.org/software/gawk/manual/html_node/Exit-Statement.html
@@ -739,7 +730,7 @@ function check_load_module(name, is_ext, exe,    cmd) {
     # Checks if the awk module or the extension $name
     # is available in the system. If $name is an extension
     # to load, the (optional) $is_ext parameter must be set to true.
-    # $exe is a custom executable name to run.
+    # $exe is a custom executable name to run (default to "awk").
     # Return true if it's, else 0.
 
     # For some reasons ARGV[0] is unreliable, see
@@ -757,7 +748,7 @@ function check_load_module(name, is_ext, exe,    cmd) {
 }
 
 
-function read_file_arr(filename, dest, start_index,   line, ret, idx) {
+function read_file_arr(filename, dest, start_index,    line, ret, idx) {
     # Reads $filename into the $dest array, one line per index
     # starting from $start_index (optional, default to 0).
     if (! start_index)

@@ -105,8 +105,9 @@ BEGIN {
     # TEST equals
     @dprint("* test equals:")
     testing::assert_true(awkpot::equals("foo", "foo"), 1, "equals \"foo\" \"foo\"")
-    testing::assert_true(awkpot::equals("foo", @/foo/), 1, "! equals \"foo\" @/foo/")
+    testing::assert_true(awkpot::equals("foo", @/foo/), 1, "equals \"foo\" @/foo/")
     testing::assert_false(awkpot::equals("foo", @/foo/, 1), 1, "! equals (t) \"foo\" @/foo/")
+    testing::assert_false(awkpot::equals("foo", "foo "), 1, "! equals \"foo\" \"foo \"")
     testing::assert_true(awkpot::equals(1, 1), 1, "equals 1 1")
     testing::assert_true(awkpot::equals(1, 1, 1), 1, "equals (t) 1 1")
     testing::assert_true(awkpot::equals(1, "1"), 1, "equals 1 \"1\"")
@@ -117,13 +118,14 @@ BEGIN {
     arr1[0] = 1 ; arr1[1] = 1
     arr2[0] = 10 ; arr2[1] = 11
     arr3[11] = 1 ; arr3[10] = 0
-    testing::assert_true(awkpot::equals(arr1, arr2), 1, "equals arr1 arr2")
-    testing::assert_true(awkpot::equals(arr3, arr2), 1, "equals arr3 arr2")
+    testing::assert_false(awkpot::equals(arr1, arr1), 1, "! equals arr1 arr1")
+    testing::assert_false(awkpot::equals(arr1, arr2), 1, "! equals arr1 arr2")
+    testing::assert_false(awkpot::equals(arr3, arr2), 1, "! equals arr3 arr2")
     @dprint("* delete arr1")
     delete arr1
-    testing::assert_true(awkpot::equals(arr1, arr3), 1, "equals arr1 arr3")
+    testing::assert_false(awkpot::equals(arr1, ""), 1, "! equals arr1 [deleted] \"\"")
+    testing::assert_false(awkpot::equals(arr3, "foo"), 1, "! equals arr1 arr3")
     testing::assert_false(awkpot::equals("foo", arr3), 1, "! equals \"foo\" arr3")
-    testing::assert_false(awkpot::equals("foo", "foo "), 1, "! equals \"foo\" \"foo \"")
 
     # TEST equals_typed
     @dprint("* test equals_typed:")
