@@ -16,6 +16,7 @@
 # * Others requires the sysutils extension (see some lines above).
 
 BEGIN {
+    STDERR = "/dev/stderr"
    if (awk::AWKPOT_DEBUG) {
 	dprint = "awkpot::dprint_real"
 	# to set dprint in awkpot functions also (defaults to dprint_fake)
@@ -587,7 +588,7 @@ BEGIN {
 	while (0 < (r = (getline line < testfile)))
 	    printf("%s%s", sprintf("\"%s\" \"\\n\"\\", awkpot::escape(line)), RS) >> outfile
 	if (r < 0) {
-	    printf("Error reading <%s>\n", testfile) >> "/dev/stderr"
+	    printf("Error reading <%s>\n", testfile) >> STDERR
 	    sys::rm(outfile)
 	    exit(1)
 	}
@@ -601,28 +602,28 @@ BEGIN {
 	success = 1
 	while (0 < (r1 = (getline line1 < testfile))) {
 	    if (0 > (r2 = (getline line2 < checkfile))) {
-		printf("Error reading <%s>\n", checkfile) >> "/dev/stderr"
+		printf("Error reading <%s>\n", checkfile) >> STDERR
 		sys::rm(outfile)
 		sys::rm(checkfile)
 		exit(8)
 	    }
 	    if (r1 != r2 || line1 != line2) {
-		printf("lines mismatch:\n%s\n%s\n", line1, line2) >> "/dev/stderr"
+		printf("lines mismatch:\n%s\n%s\n", line1, line2) >> STDERR
 		success = 0
 		break
 	    }
 	}
 	if (r1 < 0) {
-	    printf("Error reading <%s>\n", checkfile) >> "/dev/stderr"
+	    printf("Error reading <%s>\n", checkfile) >> STDERR
 	    sys::rm(outfile)
 	    sys::rm(checkfile)
 	    exit(9)
 	}
 	testing::assert_true(success, 1, "escape: diff (without diff)")
 	sys::rm(outfile)
-	print "outfile:" outfile  >> "/dev/stderr"
+	print "outfile:" outfile  >> STDERR
 	sys::rm(checkfile)
-	print "checkfile:" checkfile  >> "/dev/stderr"
+	print "checkfile:" checkfile  >> STDERR
     }
 
     # TEST endswith

@@ -26,17 +26,17 @@
 # PRINTING #
 ############
 
-function dprint_real(arg) {
-    # Prints arg on stderr, for real!
-    # Return true.
-    print arg >> "/dev/stderr"
-    return 1
-}
-
-
 function dprint_fake(arg) {
     # Does nothing, and returns false.
     return 0 # prrrrrrrrrrrrrrrint... nope
+}
+
+
+function dprint_real(arg) {
+    # Prints arg on stderr, for real!
+    # Return true.
+    print arg >> STDERR
+    return 1
 }
 
 
@@ -76,7 +76,7 @@ function get_fmt(str, conv, maxspace, position,    len, fstr, lpad, rpad) {
 	    rpad = sprintf("%*s", maxspace - len - length(lpad), "")
 	    return sprintf("%s%%%s%s", lpad, conv, rpad)
 	default:
-	    printf("ERROR: get_fmt: unknown value <%s> for $position", position) >> "/dev/stderr"
+	    printf("ERROR: get_fmt: unknown value <%s> for $position", position) >> STDERR
 	    exit(1)
     }
 }
@@ -344,7 +344,7 @@ function _make_regex(val) {
     re = @//
     sub(//, val, re)
     if (awk::typeof(re) != "regexp") {
-	printf("make_regex fail [%s]: can't create regex type\n", val) >> "/dev/stderr"
+	printf("make_regex fail [%s]: can't create regex type\n", val) >> STDERR
 	return
     }
     return re 
@@ -420,7 +420,7 @@ function check_defined(funcname, check_id) {
 		    return 1
 		} else {
 		    printf("check_defined: Unknown value for <%s>: %s\n",
-			   funcname, PROCINFO["identifiers"][funcname]) >> "/dev/stderr"
+			   funcname, PROCINFO["identifiers"][funcname]) >> STDERR
 		    return 0
 		}
 	    } else {
@@ -521,7 +521,7 @@ function force_type(val, type, dest) {
 		dest["newval"] = make_strnum(val)
 		if (dest["newval"] != (make_strnum(val) + 0)) {
 		    printf ("force_type: Cannot convert from <%s> to <%s> \n",
-			    dest["val_type"], type) >> "/dev/stderr"
+			    dest["val_type"], type) >> STDERR
 		    return 0
 		}
 	    }
@@ -534,7 +534,7 @@ function force_type(val, type, dest) {
 		dest["newval"] = make_strnum(val)
 		if (awk::typeof(dest["newval"]) != "strnum") {
 		    printf ("force_type: Cannot convert from <%s> to <%s> \n",
-			    dest["val_type"], type) >> "/dev/stderr"
+			    dest["val_type"], type) >> STDERR
 		    return 0
 		} else {
 		    dest["newval"] = awk::strtonum(dest["newval"])
@@ -546,7 +546,7 @@ function force_type(val, type, dest) {
 		dest["newval"] = cmkbool(make_strnum(val) + 0)
 		if (dest["newval"] != cmkbool(make_strnum(val))) {
 		    printf ("force_type: Cannot convert from <%s> to <%s> \n",
-			    dest["val_type"], type) >> "/dev/stderr"
+			    dest["val_type"], type) >> STDERR
 		    return 0
 		}
 	    } else if (dest["val_type"] == "number|bool") {
@@ -569,7 +569,7 @@ function force_type(val, type, dest) {
 	    }
 	    break
         default:
-	    printf ("force_type: Unknown conversion type <%s>\n", type) >> "/dev/stderr"
+	    printf ("force_type: Unknown conversion type <%s>\n", type) >> STDERR
 	    return 0
     }
     dest["newval_type"] = awk::typeof(dest["newval"])
@@ -628,7 +628,7 @@ function getline_or_die(filename, must_exit, arr,    r) {
     r = (getline)
     arr[0] = r
     if (r < 0) {
-	printf("Error reading <%s>\n", filename) >> "/dev/stderr"
+	printf("Error reading <%s>\n", filename) >> STDERR
 	if (must_exit)
 	    set_end_exit(1)
 	else
@@ -650,7 +650,7 @@ function set_end_exit(rt) {
     # Then, in the END clause, a call to <end_exit> make the program
     # exits with status $rt.
     if ((rt !~ /^[0-9]{1,3}$/) || (int(rt) < 0) || (int(rt) > 126)) {
-	printf("set_end_exit: invalid exit code <%s>\n", rt) >> "/dev/stderr"
+	printf("set_end_exit: invalid exit code <%s>\n", rt) >> STDERR
         __EXIT_REALLY = 1
         exit(__EXIT_REALLY)
     }
@@ -675,13 +675,13 @@ function exec_command(command, must_exit, status) {
     # the command's exit status will be saved (deleted at function call).
     delete status
     if (! command) {
-	printf("exec_command: <%s> invalid command\n", command) >> "/dev/stderr"
+	printf("exec_command: <%s> invalid command\n", command) >> STDERR
 	return 0
     }
     if (0 != (ret = system(command))) {
 	status[0] = ret
 	printf ("exec_command: Error! <%s> exit status is: %d\n",
-		command, ret) >> "/dev/stderr"
+		command, ret) >> STDERR
 	if (must_exit)
 	    exit(ret)
 	else
@@ -722,7 +722,7 @@ function run_command(command, nargs, args_array, must_exit, run_values,    i, cm
     if (ret < 0) {
 	if (must_exit) {
 	    printf ("run_command: Error executing <%s>. ERRNO: %d\n",
-		    cmd, PROCINFO["errno"]) >> "/dev/stderr"
+		    cmd, PROCINFO["errno"]) >> STDERR
 	    exit(PROCINFO["errno"])
 	} else {
 	    run_values["errno"] = PROCINFO["errno"]
@@ -767,7 +767,7 @@ function read_file_arr(filename, dest, start_index,   line, ret, idx) {
 	dest[idx++] = line
     if (ret < 0)
 	printf ("read_file_arr: Error reading <%s>. ERRNO: %d\n",
-		filename, PROCINFO["errno"]) >> "/dev/stderr"
+		filename, PROCINFO["errno"]) >> STDERR
     close(filename)
 }
 
@@ -811,6 +811,7 @@ function random(seed, upto, init,    __rarr, __u, __i) {
 
 
 BEGIN {
+    STDERR = "/dev/stderr"
     set_dprint("awkpot::dprint_fake")
     set_mkbool()
     __make_regex = "awkpot::_make_regex"
