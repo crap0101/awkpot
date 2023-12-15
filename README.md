@@ -62,8 +62,13 @@ make_escape(s)
     programs text AND want to use them in the non literal form,
     for example when setting ORS of OFS.
 
+make_printable(s)
+    Shortcut for get a copy os $s with
+    printable sequences (if any), using make_escape.
+    Supported escapes are: \0, \a, \b, \f,\n, \r, \t, \v.
+
 escape(s)
-    Escapes some tokens of the string $s.
+    Escapes some tokens (<"> and <\>) of the string $s.
     Designed for formatting program's help() strings
     readed from a plain text file.
 

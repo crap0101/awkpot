@@ -129,7 +129,29 @@ function join_range(arr, first, last, sep, order,    n, range_arr, prev_sorted) 
     return join(range_arr, sep, order)
 }
 
-
+function split_join(s, sep, splitfunc, sepfunc,    arrind, arrsep) {
+    # Splits the string $s (usig the builtin split() function using
+    # the $sep string (or regular expression) as separator.
+    # Then, join the pieces optionally apply the $splitfunc function
+    # on every pieces and the $sepfunc function on every separator strings
+    # obtained during the splitting. $splitfunc and $sepfunc defaults to
+    # the <id> function.
+    # Returns the resulting string.
+    if (!splitfunc)
+	splitfunc = "awkpot::id"
+    if (!sepfunc)
+	sepfunc = "awkpot::id"
+    if (1 < (n = split(s, arrind, sep, arrsep))) {
+	result = ""
+	for (i=1; i <= n; i++) {
+	    result = result @splitfunc(arrind[i]) @sepfunc(arrsep[i])
+	}
+    } else {
+	result = s
+    }
+    return result
+}
+		 
 function make_escape(s) {
     # Returns a printable form of the $s escape sequence string.
     # NOT all escaped sequences are covered as far, only
@@ -158,9 +180,15 @@ function make_escape(s) {
     }
 }
 
+function make_printable(s,    arr, seps, result, n, i) {
+    # Shortcut for get a copy os $s with
+    # printable sequences (if any), using make_escape.
+    # Supported escapes are: \0, \a, \b, \f,\n, \r, \t, \v.
+    return split_join(s, @/\\[0abfnrtv]/, "", "awkpot::make_escape")
+}
 
 function escape(s){
-    # Escapes some tokens of the string $s.
+    # Escapes some tokens (<"> and <\>) of the string $s.
     # Designed for formatting program's help() strings
     # readed from a plain text file.
     gsub(/\\/,

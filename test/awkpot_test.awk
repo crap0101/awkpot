@@ -572,6 +572,25 @@ BEGIN {
     for (i in escapearr)
 	testing::assert_equal(i, awkpot::make_escape(i), 1, sprintf("! make_escape(%s)", i))
 
+    cmd = sprintf("%s -i awkpot -v c=\"\\n\" 'BEGIN"\
+		  "{ c1=awkpot::make_escape(\"\\n\");"\
+		  "if (c == c1) {exit(0)} else {print c,\"_\",c1;exit(1)}}'", ARGV[0], i)
+    testing::assert_true(awkpot::exec_command(cmd, 0, aret), 1, "make_escape [cmp with cmdline]")
+
+    # TEST make_printable
+    cmd = sprintf("%s -i awkpot -v c=\"\\n\" 'BEGIN"	\
+		  "{ c1=awkpot::make_printable(\"\\n\");"\
+		  "if (c == c1) {exit(0)} else {print c,\"_\",c1;exit(1)}}'", ARGV[0], i)
+    testing::assert_true(awkpot::exec_command(cmd, 0, aret), 1, "make_printable [cmp with cmdline] (1)")
+    cmd = sprintf("%s -i awkpot -v c=\"\\nx\\n\" 'BEGIN"	\
+		  "{ c1=awkpot::make_printable(\"\\nx\\n\");"\
+		  "if (c == c1) {exit(0)} else {print c,\"_\",c1;exit(1)}}'", ARGV[0], i)
+    testing::assert_true(awkpot::exec_command(cmd, 0, aret), 1, "make_printable [cmp with cmdline] (2)")
+    cmd = sprintf("%s -i awkpot -v c=\"\\n\\t\\tx x\\n\" 'BEGIN"	\
+		  "{ c1=awkpot::make_printable(\"\\n\\t\\tx x\\n\");"\
+		  "if (c == c1) {exit(0)} else {print c,\"_\",c1;exit(1)}}'", ARGV[0], i)
+    testing::assert_true(awkpot::exec_command(cmd, 0, aret), 1, "make_printable [cmp with cmdline] (2)")
+
     # TEST escape
     testing::assert_equal(awkpot::escape("\"foo\""), "\\\"foo\\\"", 1, "escape [1]")
     testing::assert_equal(awkpot::escape("aaa\\taaa"), "aaa\\\\taaa", 1, "escape [2]")
