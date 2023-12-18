@@ -358,6 +358,7 @@ function get_record_string(first, last,   t, arr, seps) {
 
 
 function get_version() {
+    # Returns the awk in use version.
     return PROCINFO["version"]
 }
 

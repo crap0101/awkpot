@@ -48,6 +48,22 @@ join_range(arr, first, last, sep, order)
     (starting from 1) of the array traversal. Values < 1 for $first are
     treated as 1, and for $last are treated as the $arr length.
 
+split_join(s, sep, splitfunc, sepfunc)
+    Splits the string $s (usig the builtin split() function using
+    the $sep string (or a [strongly typed] regex) as separator.
+    Then, join the pieces optionally apply the $splitfunc function
+    on every pieces and the $sepfunc function on every separator strings
+    obtained during the splitting. $splitfunc and $sepfunc defaults to
+    the <id> function.
+    Returns the resulting string.
+
+split_at_len(s, len, dest)
+    Splits the string $s into chunks of $len length and stores
+    the resulting substrings in the $dest array (start index is 1).
+    Wrong $len values (strings, arrays, numbers < 1) causes
+    a fatal error.
+    Returns the max index.
+
 make_escape(s)
     Returns a printable form of the $s escape sequence string.
     NOT all escaped sequences are covered as far, only
@@ -83,18 +99,38 @@ strrepeat(str, count, sep)
     optionally separated by $sep.
     If count < 2 returns $str.
 
+_paragraph(s, len, dest, indent, blanks)
+    Private function, see function <paragraph>.
+
+paragraph(s, len, dest, indent, blanks)
+    Splits the string $s in substrings of length <= $len,
+    saving them in the $dest array (first index is 1).
+    $blanks is interpreted as a boolean value to choose if
+    the split must be happen at the last run of blanks before $len
+    or if the string will be split at a max $len length whatever
+    chars is present at that position.
+    $indent is a string to be prepended to each substring,
+    contributing to the $len calculation.
+    Returns $dest's max index.
+    NOTE: uses the <split_at_len> function when $blanks is false,
+    so invalid $len values (or when $len is lesser than $indent)
+    causes a fatal error.
+
 make_array_record(arr)
     Puts the fields of the current record in $arr, deleting it first.
     Returns the number of elements (NF).
     NOTE: clone of the same arrlib's function,
     just copied here for the semplicity.
 
-get_record_string(first, last,   t, arr, seps)
+get_record_string(first, last, t, arr, seps)
     Rebuilds the current record, optionally from the $first field
     to the $last field (default to the entire record).
     Values < 1 for $first are treated as 1, and for $last are
     treated as the record's number of fields.
     Returns the resulting string.
+
+get_version()
+    Returns the awk in use version.
 
 cmp_version(v1, v2, cmp, major, minor, patch)
     5.2.0 min for mkbool
@@ -127,10 +163,11 @@ le(a, b)
 cmp(a, b, f)
     Bare-bones comparison function, see <compare> for a
     more generic comparison function.
-    Compares $a and $b using the function $f, which must takes two
-    arguments and returns a true value if succedes, false otherwise.
-    If $f is not provided or evaluates to false, uses the
-    awkpot::eq function instead.
+    Compares $a and $b using the function $f, which
+    must takes two arguments and returns a true value
+    if succedes, false otherwise.
+    If $f is not provided or evaluates to false,
+    uses the awkpot::eq function instead.
     Returns the result of $f($a, $b).
 
 make_regex(val)
@@ -141,8 +178,7 @@ _make_regex(val)
     variable from the value $val.
     If fails creating the regex value, returns "unassigned".
     NOTE: works in gawk >= 5.2.2
-    For older version, see
-    the <make> function @ https://github.com/crap0101/awk_regexmix 
+    For older version, see the <make> function @ https://github.com/crap0101/awk_regexmix 
 
 set_make_regex(f)
     Set the provided $f function (which must takes *one* argument
@@ -150,8 +186,7 @@ set_make_regex(f)
     instead to the default <make_regex> function, which doesn't works
     on gawk versions <= 5.2.2 (the sub() trick doesn't works, instead of a
     regexp value a string is returned).
-    A possible $f candidate can be
-    the <make> function @ https://github.com/crap0101/awk_regexmix
+    A possible $f candidate can be the <make> function @ https://github.com/crap0101/awk_regexmix
 
 get_make_regex()
     Returns the current function used by <make_regex>
@@ -168,8 +203,7 @@ len(x)
     Returns the length of $x using the builtin length() function.
     NOTE: workaround for a bug in gawk version < 5.3.0 (at list in gawk 5.1.0)
     when using the builtin's <length> function as indirect function call.
-    Should be used - for example - as the 2nd parameter
-    of the arrlib::max_val function.
+    Should be used - for example - as the 2nd parameter of the arrlib::max_val function.
 
 check_assigned(name)
     Returns true if $name already got a value,
@@ -194,25 +228,27 @@ equals_typed(val1, val2)
     the $type parameter, instead).
 
 force_type(val, type, dest)
-    Tries to force the type of $val to $type mantaining the $val's meaning.
+    Tries to force the type of $val to $type
+    mantaining the $val's meaning.
     Saves conversion and other infos in the $dest array.
     $dest array's elements are indexed as follow:
     * "val" is the value passed to the function
     * "val_type" is the $val type as per typeof()
     * "newval" is the value after the tentative type coercion
     * "newval_type" is the "newval"'s type, as per the $type argument.
+    
     Returns 1 if the conversion succeeded or 0 if errors.
-    #
+    
     SUPPORTED $val types:
     * string, number, number|bool, strnum, regexp, unassigned, untyped
     SUPPORTED $type values:
     * string, number, regexp, number|bool, strnum, unassigned, untyped
-    #
+    
     NOTE: $type bool require a (g)awk version with the builtin
     mkbool function. In sostitution the awkpot::set_mkbool
     function can be used to set the custom _mkbool in his place,
     however the returned value will be of type "number").
-    #
+    
     NOT SO SUPPORTED CONVERSION:
     * regexp to (number|bool|strnum)
     Always check the func retcode for consistent results.
@@ -225,7 +261,7 @@ force_type(val, type, dest)
     gawk's version the new type can be one of the two,
     albeit operatively they can be used interchangeably.
     Versions prior 5.2 are expected to give the "unassigned" type.
-    #
+    
     Again, always checks the function's return code to known
     if the given result had any means.
 
@@ -281,10 +317,11 @@ exec_command(command, must_exit, status)
 run_command(command, nargs, args_array, must_exit, run_values)
     Alternative method to run a command using <getline>,
     purposely avoiding the built-in system() function (see exec_command).
-    #
+    
     Runs $command with arguments retrieved from $args_array.
-    The latter must be a zero-based indexed array filled with $nargs number
-    of arguments, used to build the command line to execute.
+    The latter must be a zero-based indexed array filled
+    with $nargs number of arguments, used to build the
+    command line to execute.
     If any errors occours during the command executions *and* must_exit is
     true, exits with ERRNO value, otherwise returns 0. If everything
     gone well, returns 1.
@@ -295,9 +332,10 @@ run_command(command, nargs, args_array, must_exit, run_values)
     * errno => the ERRNO value, if errors occours, or false.
 
 check_load_module(name, is_ext, exe)
-    Checks if the awk module or the extension $name is available in the system.
-    If $name is an extension to load, the (optional) $is_ext parameter must
-    be set to true. $exe is a custom executable name to run (default to "awk").
+    Checks if the awk module or the extension $name
+    is available in the system. If $name is an extension
+    to load, the (optional) $is_ext parameter must be set to true.
+    $exe is a custom executable name to run (default to "awk").
     Return true if it's, else 0.
 
 read_file_arr(filename, dest, start_index)
@@ -316,9 +354,10 @@ random(seed, upto, init)
     $upto (default to 1e6) is the upper limit of the
     generated number (from 0 to $upto - 1).
     To get random numbers call this function a first time as
-    #
-    # random(0, 0, 1)
-    #
+    
+    random(0, 0, 1)
+    
     to set a casual seed, then call random() without arguments
     to get random values. Giving the same value to $seed
     assures predictable sequence from run to run.
+
