@@ -15,6 +15,15 @@
 # and some non-standard ones:  _____x__foo, xx_foo__bar__xx   # ^|^
 # * Others requires the sysutils extension (see some lines above).
 
+
+function sub_hyphen(s) {
+    # for tests: subs blanks with hyphen
+    #print "before:<%s>"
+    gsub(/\s+/, "-", s)
+    #print "after:<%s>"
+    return s
+}
+
 BEGIN {
     STDERR = "/dev/stderr"
    if (awk::AWKPOT_DEBUG) {
@@ -733,6 +742,71 @@ BEGIN {
     testing::assert_equal(awkpot::join(a, "-", "@ind_num_desc"), "baz-bar-foo",
 			  1, "join(a, \"-\", \"@ind_num_desc\")")
     testing::assert_equal(ps, PROCINFO["sorted_in"], 1, "join: check sort order reset(2)")
+
+    # TEST split_join
+    s = "abc de fg   h i   jk"
+    s1 = awkpot::split_join(s, " ", "awk::toupper")
+    testing::assert_equal(s1, "ABC DE FG   H I   JK", 1, "split_join equal s1,* [toupper]")
+    s2 = awkpot::split_join(s1, @/\s/, "awk::tolower")
+    testing::assert_equal(s, s2, 1, "split_join equal s,s2 [toupper tolower]")
+
+    s1 = awkpot::split_join(s, @/\s+/, "", "sub_hyphen")
+    testing::assert_equal(s1, "abc-de-fg-h-i-jk", 1, "split_join equal s1,* [sub_hyphen]")
+
+    # TEST split_at_len
+    delete a
+    delete aa
+    sr = "123*456*789*0"
+    n1 = split(sr, aa, "*")
+    s = "1234567890"
+    n = awkpot::split_at_len(s, 3, a)
+    testing::assert_equal(n, n1, 1, sprintf("split_at_len (equals chunks) [%d]", n))
+    for (i=1; i<=n; i++)
+	testing::assert_equal(a[i], aa[i], 1, sprintf("split_at_len (equals/at 3) index %d", i))
+    # only one:
+    sr = "1234567890"
+    s = "1234567890"
+    n = awkpot::split_at_len(s, 13, a)
+    testing::assert_equal(n, 1, 1, sprintf("split_at_len     (2) (equals chunks) [%d]", n))
+    testing::assert_equal(a[1], sr, 1, sprintf("split_at_len (2) (equals/at 13) index 1"))
+    # no one:
+    sr = ""
+    s = ""
+    n = awkpot::split_at_len(s, 2, a)
+    testing::assert_equal(n, 1, 1, sprintf("split_at_len     (3) (equals chunks) [%d]", n))
+    testing::assert_equal(a[1], sr, 1, sprintf("split_at_len (3) (equals/at 13) index 1"))
+    # fail
+    cmd = sprintf("%s -i awkpot 'BEGIN { awkpot::split_at_len(\"x\", 0)}'", ARGV[0])
+    r = awkpot::exec_command(cmd, 0, aret)
+    testing::assert_equal(r, 0, 1, "split_at_len (4) must fail: [len < 1]")
+    cmd = sprintf("%s -i awkpot 'BEGIN { awkpot::split_at_len(\"x\", 0)}'", ARGV[0])
+    r = awkpot::exec_command(cmd, 0, aret)
+    testing::assert_equal(r, 0, 1, "split_at_len (5) [must fail: wrong len value]")
+
+    # TEST paragraph
+    delete a
+    delete aa
+    s = "abc de f gg h ijk l mn o pqr  st 111111111111aaaaaaaaaaaa"
+    sr = split("abc de f*gg h ijk l*mn o pqr*st*111111111111aaaaaaaaaaaa", aa, "*")
+    idx = awkpot::paragraph(s ,10, a, "", 1)
+    for (i=1; i<=idx; i++)
+	testing::assert_equal(a[i], aa[i], 1, sprintf("paragraph (equals/1) element %d", i))
+    sr = split("abc de f g*g h ijk l*mn o pqr*st 1111111*11111aaaaa*aaaaaaa", aa, "*")
+    idx = awkpot::paragraph(s ,10, a, "", 0)
+    for (i=1; i<=idx; i++)
+	testing::assert_equal(a[i], aa[i], 1, sprintf("paragraph (equals/2) element %d", i))
+    # with indent
+    sr = split("xx abc de*xx f gg h*xx ijk l*xx mn o*xx pqr*xx st*xx 111111111111aaaaaaaaaaaa", aa, "*")
+    idx = awkpot::paragraph(s ,9, a, "xx ", 1)
+    for (i=1; i<=idx; i++) {
+	printf "|%s|\n|%s|\n---\n", a[i], aa[i]
+	testing::assert_equal(a[i], aa[i], 1, sprintf("paragraph [indent] (equals/1) element %d", i))
+
+    }
+    sr = split("abc de f g*g h ijk l*mn o pqr*st 1111111*11111aaaaa*aaaaaaa", aa, "*")
+    idx = awkpot::paragraph(s ,10, a, "", 0)
+    for (i=1; i<=idx; i++)
+	testing::assert_equal(a[i], aa[i], 1, sprintf("paragraph [indent] (equals/2) element %d", i))
 
     # TEST join_range
     delete a

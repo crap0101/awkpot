@@ -131,7 +131,7 @@ function join_range(arr, first, last, sep, order,    n, range_arr, prev_sorted) 
 
 function split_join(s, sep, splitfunc, sepfunc,    arrind, arrsep) {
     # Splits the string $s (usig the builtin split() function using
-    # the $sep string (or regular expression) as separator.
+    # the $sep string (or a [strongly typed] regex) as separator.
     # Then, join the pieces optionally apply the $splitfunc function
     # on every pieces and the $sepfunc function on every separator strings
     # obtained during the splitting. $splitfunc and $sepfunc defaults to
@@ -151,7 +151,34 @@ function split_join(s, sep, splitfunc, sepfunc,    arrind, arrsep) {
     }
     return result
 }
-		 
+
+
+function split_at_len(s, len, dest,    n, a, seps) {
+    # Splits the string $s into chunks of $len length and stores
+    # the resulting substrings in the $dest array (start index is 1).
+    # Wrong $len values (strings, arrays, numbers < 1) causes
+    # a fatal error.
+    # Returns the max index.
+    delete dest
+    if (length(s) <= len) {
+	dest[1] = s
+	return 1
+    } else if ((0 + len) <= 0) {
+	printf("split_at_len: invalid len value: <%s>\n", len) >> STDERR
+	set_end_exit(1)
+    }
+    n = split(s, a, sprintf(".{%d}", len), seps)
+    for (i=1; i<n; i++)
+        dest[i] = seps[i]
+
+    if (a[n] != "") {
+        dest[n] = a[n]
+        return n
+    }
+    return --n
+}
+
+
 function make_escape(s) {
     # Returns a printable form of the $s escape sequence string.
     # NOT all escaped sequences are covered as far, only
@@ -227,6 +254,64 @@ function strrepeat(str, count, sep) {
 	new_str = new_str sep str
     return new_str
 }
+
+
+function _paragraph(s, len, dest, indent, blanks,    idx, n, i, sx, ilen, seps) {
+    # Private function, see function <paragraph>.
+    delete dest
+    idx = 1
+    ilen = length(indent)
+    n = split(s, arr, @/\s+/, seps)
+    sx = indent
+    for (i=1; i<=n; i++) {
+	if (length(sx arr[i]) > len) {
+	    if (length(sx) > ilen) {
+		dest[idx++] = sx
+		sx = indent arr[i] seps[i]
+	    } else {
+		dest[idx++] = sx arr[i]
+		sx = indent
+	    }
+	} else {
+	    sx = sx arr[i] seps[i]
+	}
+    }
+    if (length(sx) > ilen)
+	dest[idx++] = sx
+    # removes blanks at the end
+    for (i=1; i<idx; i++)
+	sub(@/\s+$/, "", dest[i])
+    return --idx
+}
+
+
+function paragraph(s, len, dest, indent, blanks,    n) {
+    # Splits the string $s in substrings of length <= $len,
+    # saving them in the $dest array (first index is 1).
+    # $blanks is interpreted as a boolean value to choose if
+    # the split must be happen at the last run of blanks before $len
+    # or if the string will be split at a max $len length whatever
+    # chars is present at that position.
+    # $indent is a string to be prepended to each substring,
+    # contributing to the $len calculation.
+    # Returns $dest's max index.
+    # NOTE: uses the <split_at_len> function when $blanks is false,
+    # so invalid $len values (or when $len is lesser than $indent)
+    # causes a fatal error.
+    if (blanks) {
+	return _paragraph(s, len, dest, indent, blanks)
+    } else {
+	n = split_at_len(s, len - length(indent), dest)
+	for (i=1; i<=n; i++) {
+	    # remove blanks at the start and at the end of the chunks
+	    gsub(@/^\s+|\s+$/, "", dest[i])
+	    # ...and add the indent
+	    dest[i] = indent dest[i]
+	}
+	return n
+    }
+}
+
 
 
 ###############
