@@ -505,13 +505,13 @@ BEGIN {
     # TEST random
     testing::assert_nothing(1+awkpot::random(), 1, "random() [assert_nothing]")
     testing::assert_nothing(1+awkpot::random(0,0,0), 1, "random() [assert_nothing]")
-    testing::assert_nothing(1+awkpot::random(1,11,1), 1, "random() [assert_nothing]")
+    testing::assert_nothing(1+awkpot::random(11,1,1), 1, "random() [assert_nothing]")
 
-    awkpot::random(4, 0, 1)
+    awkpot::random(0, 4, 1)
     for (i=0;i<5;i++)
 	__r1[i] = awkpot::random()
 
-    awkpot::random(4, 0, 1)
+    awkpot::random(0, 4, 1)
     for (i=0;i<5;i++)
 	__r2[i] = awkpot::random()
     for (i=0;i<5;i++)
@@ -520,7 +520,7 @@ BEGIN {
     # test upto
     awkpot::random(0, 0, 1)
     for (i=0;i<5;i++)
-	testing::assert_true(length(awkpot::random(0, 1000)) < 4, 1, "random() upto")
+	testing::assert_true(length(awkpot::random(1000)) < 4, 1, "random() upto")
 
     # test randomness
     awkpot::random(0, 0, 1)
@@ -714,7 +714,7 @@ BEGIN {
     for (i in __arr) {
 	s = __arr[i]
 	len = length(s)
-	count = awkpot::random(0, 50)
+	count = awkpot::random(50)
 	ns = awkpot::strrepeat(s, count)
 	nlen = length(ns)
 	if (count < 2)

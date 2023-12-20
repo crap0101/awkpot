@@ -892,7 +892,7 @@ function set_sort_order(sort_type,    prev_sorted) {
     return prev_sorted
 }
 
-function random(seed, upto, init,    __rarr, __u, __i) {
+function random(upto, seed, init,    __rarr, __u, __i) {
     # Convenience function to generate pseudo-random numbers
     # using some builtin functions.
     # $seed is a positive integer used (if $init is true) to initialize
